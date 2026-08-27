@@ -1,0 +1,16 @@
+{
+  "packages": [
+    {
+      "uri": "karnkaul/confy",
+      "branch": "v0.1.1"
+    },
+    {
+      "uri": "karnkaul/klib",
+      "branch": "v0.6.9"
+    },
+    {
+      "uri": "karnkaul/clap",
+      "branch": "v0.1.2"
+    }
+  ]
+}
