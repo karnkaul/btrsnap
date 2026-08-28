@@ -1,17 +1,24 @@
 #pragma once
+#include "detail/clock.hpp"
 #include "detail/config.hpp"
-#include "detail/snapshot_info.hpp"
 #include <filesystem>
 
 namespace btrsnap::detail {
 namespace fs = std::filesystem;
 
-class Agent {
-  public:
-	[[nodiscard]] static auto create(Config const& config) -> std::optional<Agent>;
+struct SnapshotInfo {
+	[[nodiscard]] static auto create(fs::path path) -> SnapshotInfo;
 
-	[[nodiscard]] auto get_subvolume_path() const -> fs::path const& { return m_subvolume; }
-	[[nodiscard]] auto get_limit() const -> int { return m_limit; }
+	fs::path path{};
+	std::optional<Clock::time_point> timestamp{};
+};
+
+class Subvolume {
+  public:
+	[[nodiscard]] static auto create(Config const& config) -> std::optional<Subvolume>;
+
+	[[nodiscard]] auto get_path() const -> fs::path const& { return m_path; }
+	[[nodiscard]] auto get_snapshot_limit() const -> int { return m_snapshot_limit; }
 
 	void list_snapshots();
 	auto take_snapshot() -> bool;
@@ -20,14 +27,14 @@ class Agent {
 	static auto delete_snapshots(std::span<SnapshotInfo const> snapshots) -> bool;
 
   private:
-	explicit Agent(Config const& config);
+	explicit Subvolume(Config const& config);
 
 	void populate_snapshots();
 	auto create_save_directory() -> bool;
 
-	fs::path m_subvolume{};
+	fs::path m_path{};
 	fs::path m_save_directory{};
 	std::vector<SnapshotInfo> m_snapshots{};
-	int m_limit{};
+	int m_snapshot_limit{};
 };
 } // namespace btrsnap::detail

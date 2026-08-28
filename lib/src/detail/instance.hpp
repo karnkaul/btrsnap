@@ -1,6 +1,6 @@
 #pragma once
-#include "detail/agent.hpp"
 #include "detail/config.hpp"
+#include "detail/subvolume.hpp"
 #include "klib/enum/bitops.hpp"
 #include <optional>
 
@@ -27,6 +27,6 @@ class Instance {
 	template <typename F>
 	auto delete_snapshots(F get_keep) -> bool;
 
-	std::vector<Agent> m_agents{};
+	std::vector<Subvolume> m_subvolumes{};
 };
 } // namespace btrsnap::detail
