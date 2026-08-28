@@ -43,8 +43,12 @@ void Instance::list_snapshots() {
 }
 
 auto Instance::take_snapshots(Flag const flags) -> bool {
-	auto ret = true;
-	for (auto& agent : m_agents) { ret &= agent.take_snapshot(); }
+	auto count = 0;
+	for (auto& agent : m_agents) {
+		if (agent.take_snapshot()) { ++count; }
+	}
+	auto const ret = count > 0;
+	if (ret) { log.info("[Instance] {} snapshots successfully saved", count); }
 
 	if ((flags & Flag::NoTrim) == Flag::None) { trim_snapshots(); }
 
@@ -52,14 +56,22 @@ auto Instance::take_snapshots(Flag const flags) -> bool {
 }
 
 void Instance::trim_snapshots() {
-	auto to_delete = std::vector<SnapshotInfo>{};
-	for (auto& agent : m_agents) { agent.fill_snapshots_to_delete(to_delete, agent.get_limit()); }
-	Agent::delete_snapshots(to_delete);
+	delete_snapshots([](Agent const& agent) { return agent.get_limit(); });
 }
 
 auto Instance::clear_snapshots() -> bool {
+	return delete_snapshots([](Agent const&) { return 0; });
+}
+
+template <typename F>
+auto Instance::delete_snapshots(F get_keep) -> bool {
 	auto to_delete = std::vector<SnapshotInfo>{};
-	for (auto& agent : m_agents) { agent.fill_snapshots_to_delete(to_delete, 0); }
-	return Agent::delete_snapshots(to_delete);
+	for (auto& agent : m_agents) {
+		auto const keep = get_keep(agent);
+		agent.fill_snapshots_to_delete(to_delete, keep);
+	}
+	auto const ret = Agent::delete_snapshots(to_delete);
+	if (!to_delete.empty() && ret) { log.info("[Instance] {} snapshots successfully deleted", to_delete.size()); }
+	return ret;
 }
 } // namespace btrsnap::detail

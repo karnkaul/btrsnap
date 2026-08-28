@@ -24,6 +24,9 @@ class Instance {
   private:
 	explicit Instance(std::span<Config const> configs);
 
+	template <typename F>
+	auto delete_snapshots(F get_keep) -> bool;
+
 	std::vector<Agent> m_agents{};
 };
 } // namespace btrsnap::detail

@@ -22,7 +22,10 @@
       "inherits": "default",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++"
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_CXX_FLAGS_INIT": "-Wall -Wextra -Wpedantic -Wconversion -Werror=return-type",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT": "-Werror",
+        "CMAKE_CXX_FLAGS_RELEASE_INIT": "-Werror"
       }
     },
     {
@@ -31,7 +34,10 @@
       "inherits": "default",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++"
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_FLAGS_INIT": "-Wall -Wextra -Wpedantic -Wconversion -Wshadow-header -Werror=return-type",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT": "-Werror",
+        "CMAKE_CXX_FLAGS_RELEASE_INIT": "-Werror"
       }
     },
     {
@@ -48,24 +54,14 @@
       "displayName": "Ninja GCC",
       "description": "Build configuration using Ninja Multi-config / GCC",
       "inherits": "base-gcc",
-      "binaryDir": "${sourceDir}/out/gcc",
-      "cacheVariables": {
-        "CMAKE_CXX_FLAGS_INIT": "-Wall -Wextra -Wpedantic -Wconversion -Werror=return-type",
-        "CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT": "-Werror",
-        "CMAKE_CXX_FLAGS_RELEASE_INIT": "-Werror"
-      }
+      "binaryDir": "${sourceDir}/out/gcc"
     },
     {
       "name": "ninja-clang",
       "displayName": "Ninja Clang",
       "description": "Build configuration using Ninja Multi-config / Clang",
       "inherits": "base-clang",
-      "binaryDir": "${sourceDir}/out/clang",
-      "cacheVariables": {
-        "CMAKE_CXX_FLAGS_INIT": "-Wall -Wextra -Wpedantic -Wconversion -Werror=return-type",
-        "CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT": "-Werror",
-        "CMAKE_CXX_FLAGS_RELEASE_INIT": "-Werror"
-      }
+      "binaryDir": "${sourceDir}/out/clang"
     },
     {
       "name": "ninja-msvc",
@@ -85,7 +81,7 @@
       "inherits": "ninja-clang",
       "binaryDir": "${sourceDir}/out/ubsan",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS_INIT": "-fsanitize=undefined -Wall -Wextra -Wpedantic -Wconversion -Werror=return-type"
+        "CMAKE_CXX_FLAGS_INIT": "-fsanitize=undefined -Wall -Wextra -Wpedantic -Wconversion -Wshadow-header -Werror=return-type"
       }
     },
     {
@@ -115,7 +111,7 @@
       "inherits": "default",
       "binaryDir": "${sourceDir}/out/tsan",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS_INIT": "-fsanitize=thread -Wall -Wextra -Wpedantic -Wconversion -Werror=return-type"
+        "CMAKE_CXX_FLAGS_INIT": "-fsanitize=thread -Wall -Wextra -Wpedantic -Wconversion -Wshadow-header -Werror=return-type"
       }
     },
     {
