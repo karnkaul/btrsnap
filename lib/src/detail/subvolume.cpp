@@ -1,4 +1,5 @@
 #include "detail/subvolume.hpp"
+#include "detail/btrfs_api.hpp"
 #include "detail/log.hpp"
 #include "detail/shell.hpp"
 #include <algorithm>
@@ -19,12 +20,13 @@ auto SnapshotInfo::create(fs::path path) -> SnapshotInfo {
 }
 
 auto Subvolume::create(Config const& config) -> std::optional<Subvolume> {
-	auto ret = Subvolume{config};
-	if (!fs::is_directory(ret.m_path)) {
-		log.error("[Subvolume] Nonexistent subvolume: '{}'", ret.m_path.string());
+	auto const is_subvolume = btrfs::is_subvolume(config.subvolume);
+	if (!is_subvolume) {
+		log.error("[Subvolume] {}: {} ({})", is_subvolume.error().text, config.subvolume, is_subvolume.error().code);
 		return {};
 	}
 
+	auto ret = Subvolume{config};
 	if (fs::exists(ret.m_save_directory) && !fs::is_directory(ret.m_save_directory)) {
 		log.error("[Subvolume] Snapshots path is not a directory: '{}'", ret.m_save_directory.string());
 		return {};
@@ -92,6 +94,7 @@ void Subvolume::populate_snapshots() {
 	auto err = std::error_code{};
 	for (auto const& it : fs::directory_iterator{m_save_directory, err}) {
 		if (!it.is_directory()) { continue; }
+		if (!btrfs::is_subvolume(it.path().string())) { continue; }
 		m_snapshots.push_back(SnapshotInfo::create(it.path()));
 	}
 	std::ranges::sort(m_snapshots, [](SnapshotInfo const& a, SnapshotInfo const& b) { return a.timestamp > b.timestamp; });
