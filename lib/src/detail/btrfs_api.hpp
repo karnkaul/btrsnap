@@ -8,8 +8,9 @@ struct Error {
 	klib::CString text{};
 };
 
-template <typename Type>
-using Result = std::expected<Type, Error>;
+using Result = std::expected<void, Error>;
 
-[[nodiscard]] auto is_subvolume(klib::CString path) -> Result<void>;
+[[nodiscard]] auto is_subvolume(klib::CString path) -> Result;
+[[nodiscard]] auto create_snapshot(klib::CString src, klib::CString dst) -> Result;
+auto delete_subvolume(klib::CString path) -> Result;
 } // namespace btrsnap::detail::btrfs

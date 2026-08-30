@@ -1,7 +1,6 @@
 #include "detail/subvolume.hpp"
 #include "detail/btrfs_api.hpp"
 #include "detail/log.hpp"
-#include "detail/shell.hpp"
 #include <algorithm>
 #include <print>
 #include <ranges>
@@ -54,37 +53,41 @@ auto Subvolume::take_snapshot() -> bool {
 	if (!create_save_directory()) { return false; }
 
 	auto const dirname = to_pathname(Clock::now());
-	auto const subdirectory = m_save_directory / dirname;
-	auto const expression = std::format("btrfs subvolume snapshot {} {}", m_path.string(), subdirectory.string());
-	if (shell::execute(expression)) { return true; }
+	auto const subdirectory = (m_save_directory / dirname).string();
+	auto const result = btrfs::create_snapshot(m_path.string(), subdirectory);
+	if (result) {
+		log.info("[Subvolume] Snapshot created: {}", subdirectory);
+		return true;
+	}
 
-	log.error("[Subvolume] Failed to take snapshot of subvolume: '{}'", m_path.string());
+	log.error("[Subvolume] Snapshot failed: {}, reason: {} ({})", subdirectory, result.error().text, result.error().code);
 	return false;
 }
 
-void Subvolume::fill_snapshots_to_delete(std::vector<SnapshotInfo>& out, int const keep) {
+auto Subvolume::delete_snapshots(int const keep) -> bool {
 	KLIB_ASSERT(keep >= 0);
 	populate_snapshots();
 
 	std::erase_if(m_snapshots, [](SnapshotInfo const& snapshot) { return !snapshot.timestamp; });
-	auto to_remove = std::span{m_snapshots};
-	log.info("[Subvolume] '{}' : keep: {}, timestamped: {}", m_path.string(), keep, to_remove.size());
-	if (int(to_remove.size()) < keep) { return; }
+	auto to_delete = std::span{m_snapshots};
+	log.info("[Subvolume] '{}' : keep: {}, timestamped: {}", m_path.string(), keep, to_delete.size());
+	if (int(to_delete.size()) < keep) { return true; }
 
-	to_remove = to_remove.subspan(std::size_t(keep));
-	out.append_range(to_remove);
-}
+	to_delete = to_delete.subspan(std::size_t(keep));
+	if (to_delete.empty()) { return true; }
 
-auto Subvolume::delete_snapshots(std::span<SnapshotInfo const> snapshots) -> bool {
-	if (snapshots.empty()) { return true; }
-
-	auto expression = std::string{"btrfs subvolume delete -c"};
-	for (auto const& snapshot : snapshots) { std::format_to(std::back_inserter(expression), " {}", snapshot.path.string()); }
-
-	if (shell::execute(expression)) { return true; }
-
-	log.warn("[Subvolume] One or more snapshots failed to be deleted");
-	return false;
+	auto ret = true;
+	for (auto const& snapshot : to_delete) {
+		auto const path = snapshot.path.string();
+		auto const result = btrfs::delete_subvolume(path);
+		if (!result) {
+			ret = false;
+			log.error("[Subvolume] Snapshot deletion failed: {}, reason: {} ({})", path, result.error().text, result.error().code);
+		} else {
+			log.info("[Subvolume] Snapshot deleted: {}", path);
+		}
+	}
+	return ret;
 }
 
 void Subvolume::populate_snapshots() {

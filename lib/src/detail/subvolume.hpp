@@ -22,9 +22,7 @@ class Subvolume {
 
 	void list_snapshots();
 	auto take_snapshot() -> bool;
-	void fill_snapshots_to_delete(std::vector<SnapshotInfo>& out, int keep);
-
-	static auto delete_snapshots(std::span<SnapshotInfo const> snapshots) -> bool;
+	auto delete_snapshots(int keep) -> bool;
 
   private:
 	explicit Subvolume(Config const& config);

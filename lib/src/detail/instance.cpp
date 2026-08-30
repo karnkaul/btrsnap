@@ -78,13 +78,11 @@ auto Instance::clear_snapshots() -> bool {
 
 template <typename F>
 auto Instance::delete_snapshots(F get_keep) -> bool {
-	auto to_delete = std::vector<SnapshotInfo>{};
+	auto ret = true;
 	for (auto& subvolume : m_subvolumes) {
 		auto const keep = get_keep(subvolume);
-		subvolume.fill_snapshots_to_delete(to_delete, keep);
+		ret &= subvolume.delete_snapshots(keep);
 	}
-	auto const ret = Subvolume::delete_snapshots(to_delete);
-	if (!to_delete.empty() && ret) { log.info("[Instance] {} snapshot(s) successfully deleted", to_delete.size()); }
 	return ret;
 }
 } // namespace btrsnap::detail
