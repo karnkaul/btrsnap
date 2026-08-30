@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 sudo apt update -yq
 sudo apt install libbtrfsutil-dev
