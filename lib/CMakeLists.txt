@@ -6,6 +6,7 @@ target_compile_features(${package_name}-lib PUBLIC cxx_std_23)
 target_link_libraries(${package_name}-lib PUBLIC
   klib::klib
   confy::confy
+  btrfsutil
 )
 
 target_include_directories(${package_name}-lib PRIVATE
