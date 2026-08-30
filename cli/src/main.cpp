@@ -17,21 +17,21 @@ class App {
 		}
 
 		if (m_list) {
-			list_snapshots();
+			list_snapshots(m_custom_config_path);
 			return EXIT_SUCCESS;
 		}
 
 		if (m_only_trim) {
-			trim_snapshots();
+			trim_snapshots(m_custom_config_path);
 			return EXIT_SUCCESS;
 		}
 
 		if (m_clear) {
-			if (!clear_snapshots()) { return EXIT_FAILURE; }
+			if (!clear_snapshots(m_custom_config_path)) { return EXIT_FAILURE; }
 			return EXIT_SUCCESS;
 		}
 
-		if (!take_snapshots(m_no_trim)) { return EXIT_FAILURE; }
+		if (!take_snapshots(m_no_trim, m_custom_config_path)) { return EXIT_FAILURE; }
 
 		return EXIT_SUCCESS;
 	}
@@ -43,8 +43,9 @@ class App {
 			.parameters =
 				{
 					clap::named_option(m_generate_for_subvolume, "g,generate", "generate config for SUBVOLUME", &m_generate),
+					clap::named_option(m_custom_config_path, "c,config", "path to custom config"),
 					clap::named_flag(m_list, "l,list", "list snapshots"),
-					clap::named_flag(m_no_trim, "n,notrim", "skip trimming snapshots"),
+					clap::named_flag(m_no_trim, "n,no-trim", "skip trimming snapshots"),
 					clap::named_flag(m_only_trim, "t,trim", "only trim existing snapshots"),
 					clap::named_flag(m_clear, "clear", "clear ALL saved snapshots"),
 				},
@@ -59,6 +60,7 @@ class App {
 	}
 
 	std::string_view m_generate_for_subvolume{};
+	std::string m_custom_config_path{};
 	bool m_generate{};
 	bool m_list{};
 	bool m_no_trim{};

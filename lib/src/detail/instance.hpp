@@ -1,6 +1,6 @@
 #pragma once
-#include "detail/agent.hpp"
 #include "detail/config.hpp"
+#include "detail/subvolume.hpp"
 #include "klib/enum/bitops.hpp"
 #include <optional>
 
@@ -15,6 +15,7 @@ enum class Flag : std::int8_t {
 class Instance {
   public:
 	[[nodiscard]] static auto create() -> std::optional<Instance>;
+	[[nodiscard]] static auto create(klib::CString custom_config_path) -> std::optional<Instance>;
 
 	void list_snapshots();
 	auto take_snapshots(Flag flags = Flag::None) -> bool;
@@ -22,8 +23,13 @@ class Instance {
 	auto clear_snapshots() -> bool;
 
   private:
+	[[nodiscard]] static auto create_impl(std::span<Config const> configs) -> std::optional<Instance>;
+
 	explicit Instance(std::span<Config const> configs);
 
-	std::vector<Agent> m_agents{};
+	template <typename F>
+	auto delete_snapshots(F get_keep) -> bool;
+
+	std::vector<Subvolume> m_subvolumes{};
 };
 } // namespace btrsnap::detail

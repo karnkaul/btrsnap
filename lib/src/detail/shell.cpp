@@ -4,7 +4,7 @@
 
 namespace btrsnap::detail {
 auto shell::execute(klib::CString const expression) -> bool {
-	log.debug("-- {}", expression);
+	log.info("-- {}", expression);
 	return klib::shell::execute(expression) == klib::shell::success_v;
 }
 } // namespace btrsnap::detail
