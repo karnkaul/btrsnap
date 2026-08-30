@@ -39,6 +39,6 @@ auto btrsnap::clear_snapshots(klib::CString const custom_config_path) -> bool {
 }
 
 void btrsnap::print_config_for(std::string_view const subvolume) {
-	auto const config = detail::Config{.subvolume = std::string{subvolume}};
+	auto const config = Config{.subvolume = std::string{subvolume}};
 	config.print();
 }

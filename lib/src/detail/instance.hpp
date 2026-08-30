@@ -1,5 +1,4 @@
 #pragma once
-#include "detail/config.hpp"
 #include "detail/subvolume.hpp"
 #include "klib/enum/bitops.hpp"
 #include <optional>

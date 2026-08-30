@@ -3,7 +3,7 @@
 #include <optional>
 #include <vector>
 
-namespace btrsnap::detail {
+namespace btrsnap {
 struct Config {
 	static constexpr std::string_view directory_v{"/etc/btrsnap"};
 
@@ -19,4 +19,4 @@ struct Config {
 	std::string subdirectory{".snapshots"};
 	int limit{3};
 };
-} // namespace btrsnap::detail
+} // namespace btrsnap

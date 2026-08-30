@@ -1,6 +1,6 @@
 #pragma once
 #include "btrsnap/clock.hpp"
-#include "detail/config.hpp"
+#include "btrsnap/config.hpp"
 #include <filesystem>
 
 namespace btrsnap::detail {
