@@ -10,23 +10,17 @@ auto Instance::create() -> std::optional<Instance> {
 		std::println("No configs found in {}", Config::directory_v);
 		return {};
 	}
+	return create_impl(configs);
+}
 
-	auto ret = Instance{configs};
-	if (ret.m_subvolumes.empty()) {
-		std::println("No valid subvolumes in loaded configs");
+auto Instance::create(klib::CString const custom_config_path) -> std::optional<Instance> {
+	auto const config = Config::from_file(custom_config_path);
+	if (!config) {
+		std::println("Failed to load custom config: {}", custom_config_path);
 		return {};
 	}
 
-	if constexpr (klib::log::debug_enabled_v) {
-		auto subvolumes_text = std::string{};
-		for (auto const& subvolume : ret.m_subvolumes) {
-			if (!subvolumes_text.empty()) { subvolumes_text.append(", "); }
-			subvolumes_text.append(subvolume.get_path().string());
-		}
-		log.info("[Instance] {} Subvolumes loaded: {}", ret.m_subvolumes.size(), subvolumes_text);
-	}
-
-	return ret;
+	return create_impl({&*config, 1});
 }
 
 Instance::Instance(std::span<Config const> configs) {
@@ -74,6 +68,25 @@ auto Instance::clear_snapshots() -> bool {
 	if (delete_snapshots([]([[maybe_unused]] Subvolume const& subvolume) { return 0; })) { return true; }
 	log.error("[Instance] Failed to clear snapshots");
 	return false;
+}
+
+auto Instance::create_impl(std::span<Config const> configs) -> std::optional<Instance> {
+	auto ret = Instance{configs};
+	if (ret.m_subvolumes.empty()) {
+		std::println("No valid subvolumes in loaded configs");
+		return {};
+	}
+
+	if constexpr (klib::log::debug_enabled_v) {
+		auto subvolumes_text = std::string{};
+		for (auto const& subvolume : ret.m_subvolumes) {
+			if (!subvolumes_text.empty()) { subvolumes_text.append(", "); }
+			subvolumes_text.append(subvolume.get_path().string());
+		}
+		log.info("[Instance] {} Subvolumes loaded: {}", ret.m_subvolumes.size(), subvolumes_text);
+	}
+
+	return ret;
 }
 
 template <typename F>

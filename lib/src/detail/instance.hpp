@@ -15,6 +15,7 @@ enum class Flag : std::int8_t {
 class Instance {
   public:
 	[[nodiscard]] static auto create() -> std::optional<Instance>;
+	[[nodiscard]] static auto create(klib::CString custom_config_path) -> std::optional<Instance>;
 
 	void list_snapshots();
 	auto take_snapshots(Flag flags = Flag::None) -> bool;
@@ -22,6 +23,8 @@ class Instance {
 	auto clear_snapshots() -> bool;
 
   private:
+	[[nodiscard]] static auto create_impl(std::span<Config const> configs) -> std::optional<Instance>;
+
 	explicit Instance(std::span<Config const> configs);
 
 	template <typename F>
