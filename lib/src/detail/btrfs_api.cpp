@@ -1,5 +1,6 @@
 #include "detail/btrfs_api.hpp"
 #include "klib/debug/assert.hpp"
+#include <utility>
 
 #if !__has_include(<btrfsutil.h>)
 #error btrfsutil.h not found
@@ -12,12 +13,10 @@ namespace btrfs {
 namespace {
 [[nodiscard]] auto to_error(btrfs_util_error const in) -> Error {
 	KLIB_ASSERT(in != BTRFS_UTIL_OK);
-	auto const ret = Error{
-		.code = errno,
+	return Error{
+		.code = std::exchange(errno, 0),
 		.text = btrfs_util_strerror(in),
 	};
-	errno = {};
-	return ret;
 }
 
 template <typename F>
@@ -33,7 +32,7 @@ auto btrfs::is_subvolume(klib::CString const path) -> Result {
 	return wrap([&] { return btrfs_util_subvolume_is_valid(path.c_str()); });
 }
 
-auto btrfs::create_snapshot(klib::CString src, klib::CString dst) -> Result {
+auto btrfs::create_snapshot(klib::CString const src, klib::CString const dst) -> Result {
 	return wrap([&] { return btrfs_util_subvolume_snapshot(src.c_str(), dst.c_str(), 0, nullptr, nullptr); });
 }
 
