@@ -16,11 +16,13 @@ This is experimental and hobbyist software, it is strongly recommended to use (m
 
 - Linux with at least one `btrfs` filesystem
 - GCC 15+ (its associated `libstdc++`)
+- `libbtrfsutil`
 
 ### Build-time
 
 - CMake 4.3+
 - GCC 15+ / Clang 22+
+- `libbtrfsutil` and its development header
 
 ## Usage
 
@@ -38,7 +40,6 @@ Use `cron` or `systemd` service and timer units.
 
 1. Flat list of snapshots: no daily/weekly/etc buckets
 1. Oldest snapshots are indiscriminately deleted to keep the total under the configured limit
-1. The app simply calls `btrfs` over the system shell, with all its implications
 
 ## Building
 

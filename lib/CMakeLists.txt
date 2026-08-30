@@ -3,8 +3,11 @@ add_library(${package_name}::${package_name}-lib ALIAS ${package_name}-lib)
 
 target_compile_features(${package_name}-lib PUBLIC cxx_std_23)
 
-target_link_libraries(${package_name}-lib PUBLIC
+target_link_libraries(${package_name}-lib
+  PUBLIC
   klib::klib
+
+  PRIVATE
   confy::confy
   btrfsutil
 )
