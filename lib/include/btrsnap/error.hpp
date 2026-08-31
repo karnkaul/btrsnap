@@ -8,13 +8,11 @@ enum class ErrorType : std::int8_t {
 	Unknown,
 	InvalidArgument,
 	Btrfs,
-	IOError,
 };
 inline auto const error_type_name_map = klib::EnumNameMap<ErrorType>{
 	{ErrorType::Unknown, "UnknownError"},
 	{ErrorType::InvalidArgument, "InvalidArgument"},
 	{ErrorType::Btrfs, "BtrfsError"},
-	{ErrorType::IOError, "IOError"},
 };
 
 struct Error {

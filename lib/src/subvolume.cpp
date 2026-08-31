@@ -1,6 +1,5 @@
 #include "btrsnap/subvolume.hpp"
 #include "btrsnap/btrfs.hpp"
-#include "detail/to_error.hpp"
 #include <algorithm>
 
 namespace btrsnap {
@@ -16,15 +15,10 @@ namespace {
 } // namespace
 
 auto Subvolume::create(fs::path path, std::string_view const snapshot_subdirectory) -> Result<Subvolume> {
-	auto const to_subvolume = [&] -> Result<Subvolume> {
-		auto snapshot_directory = path / snapshot_subdirectory;
-		if (fs::exists(snapshot_directory) && !fs::is_directory(snapshot_directory)) {
-			return detail::to_error(Error::Type::InvalidArgument, std::format("Snapshot path is not a directory: {}", snapshot_directory.string()));
-		}
+	auto snapshot_directory = path / snapshot_subdirectory;
+	return btrfs::is_subvolume(path.string()).and_then([&] { return btrfs::is_subvolume(snapshot_directory.string()); }).transform([&] {
 		return Subvolume{std::move(path), std::move(snapshot_directory)};
-	};
-
-	return btrfs::is_subvolume(path.string()).and_then([&] { return to_subvolume(); });
+	});
 }
 
 auto Subvolume::get_all_snapshots() const -> std::vector<Snapshot> {
@@ -42,22 +36,10 @@ auto Subvolume::get_all_snapshots() const -> std::vector<Snapshot> {
 }
 
 auto Subvolume::take_snapshot(Clock::time_point const timestamp) -> Result<Snapshot> {
-	auto const create_snapshot = [&] -> Result<Snapshot> {
-		auto subdirectory = m_snapshot_directory / to_pathname(timestamp);
-		return btrfs::create_snapshot(m_path.string(), subdirectory.string()).transform([&] {
-			return Snapshot{.path = std::move(subdirectory), .timestamp = timestamp};
-		});
-	};
-	return create_snapshot_directory().and_then([&] { return create_snapshot(); });
-}
-
-auto Subvolume::create_snapshot_directory() const -> Result<void> {
-	if (fs::exists(m_snapshot_directory)) { return {}; }
-
-	auto err = std::error_code{};
-	if (fs::create_directories(m_snapshot_directory, err)) { return {}; }
-
-	return detail::to_error(Error::Type::IOError, std::format("Failed to create snapshots subdirectory: '{}'", m_snapshot_directory.string()));
+	auto subdirectory = m_snapshot_directory / to_pathname(timestamp);
+	return btrfs::create_snapshot(m_path.string(), subdirectory.string()).transform([&] {
+		return Snapshot{.path = std::move(subdirectory), .timestamp = timestamp};
+	});
 }
 
 Subvolume::Snapshots::Snapshots(Subvolume const& subvolume) : m_snapshots(subvolume.get_all_snapshots()) {
