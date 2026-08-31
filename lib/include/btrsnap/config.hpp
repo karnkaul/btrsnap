@@ -10,9 +10,6 @@ struct Config {
 	[[nodiscard]] static auto from_file(klib::CString path) -> std::optional<Config>;
 	[[nodiscard]] static auto from_directory(std::string_view directory = directory_v) -> std::vector<Config>;
 
-	// NOLINTNEXTLINE(modernize-use-nodiscard)
-	auto to_file(klib::CString path) const -> bool;
-
 	void print(std::string_view save_directory = directory_v) const;
 
 	std::string subvolume{};

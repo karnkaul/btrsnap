@@ -18,7 +18,6 @@ auto const log = klib::log::Typed<Subvolume>{};
 } // namespace
 
 auto Subvolume::create(fs::path path, std::string_view const snapshot_subdirectory) -> Result<Subvolume> {
-
 	auto result = btrfs::is_subvolume(path.string());
 	if (!result) { return std::unexpected{std::move(result.error())}; }
 
@@ -36,8 +35,6 @@ auto Subvolume::create(fs::path path, std::string_view const snapshot_subdirecto
 }
 
 auto Subvolume::get_all_snapshots() const -> std::vector<Snapshot> {
-	if (!fs::exists(m_snapshot_directory)) { return {}; }
-
 	auto ret = std::vector<Snapshot>{};
 	auto err = std::error_code{};
 	for (auto const& it : fs::directory_iterator{m_snapshot_directory, err}) {
@@ -45,7 +42,6 @@ auto Subvolume::get_all_snapshots() const -> std::vector<Snapshot> {
 		if (!btrfs::is_subvolume(it.path().string())) { continue; }
 		ret.push_back(to_snapshot(it.path()));
 	}
-
 	return ret;
 }
 
