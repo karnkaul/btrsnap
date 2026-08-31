@@ -1,4 +1,4 @@
-#include "detail/config.hpp"
+#include "btrsnap/config.hpp"
 #include "confy/reader.hpp"
 #include "confy/writer.hpp"
 #include "klib/file_io.hpp"
@@ -6,7 +6,7 @@
 #include <format>
 #include <iostream>
 
-namespace btrsnap::detail {
+namespace btrsnap {
 namespace fs = std::filesystem;
 
 namespace key {
@@ -59,4 +59,4 @@ void Config::print(std::string_view const save_directory) const {
 
 	writer.print_to(std::cout);
 }
-} // namespace btrsnap::detail
+} // namespace btrsnap

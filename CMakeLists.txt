@@ -6,7 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_DEBUG_POSTFIX "-d")
 
 set(package_name btrsnap)
-project(${package_name} VERSION 0.1.2)
+project(${package_name} VERSION 0.1.3)
 
 add_subdirectory(ext)
 add_subdirectory(lib)

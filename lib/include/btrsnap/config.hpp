@@ -3,15 +3,12 @@
 #include <optional>
 #include <vector>
 
-namespace btrsnap::detail {
+namespace btrsnap {
 struct Config {
 	static constexpr std::string_view directory_v{"/etc/btrsnap"};
 
 	[[nodiscard]] static auto from_file(klib::CString path) -> std::optional<Config>;
 	[[nodiscard]] static auto from_directory(std::string_view directory = directory_v) -> std::vector<Config>;
-
-	// NOLINTNEXTLINE(modernize-use-nodiscard)
-	auto to_file(klib::CString path) const -> bool;
 
 	void print(std::string_view save_directory = directory_v) const;
 
@@ -19,4 +16,4 @@ struct Config {
 	std::string subdirectory{".snapshots"};
 	int limit{3};
 };
-} // namespace btrsnap::detail
+} // namespace btrsnap
