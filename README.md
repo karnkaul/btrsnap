@@ -28,7 +28,7 @@ This is experimental and hobbyist software, it is strongly recommended to use (m
 
 Invoking `btrsnap` takes a snapshot and garbage-collects oldest snapshots across all configured subvolumes. Unless the subvolumes are mounted with permissions for users to create (and delete) snapshots, this will require privileged execution.
 
-Create a configuration file for a subvolume by passing `--generate=/path/to/subvolume`, and save one or more such files to `/etc/btrsnap/`. Snapshots are stored in `/path/to/subvolume/.snapshots` by default (configurable), and limited to `3` by default (also configurable).
+Create a configuration file for a subvolume by passing `--generate=/path/to/subvolume`, and save one or more such files to `/etc/btrsnap/`. Snapshots are stored in `/path/to/subvolume/.snapshots` by default (configurable), and limited to `3` by default (also configurable). The snapshots sub-path must also be a subvolume.
 
 Pass `--list` to print a list of existing snapshots across all configured subvolumes. Pass `--clear` to delete **ALL** saved snapshots.
 

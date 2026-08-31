@@ -1,7 +1,6 @@
 #pragma once
 #include "btrsnap/config.hpp"
 #include "btrsnap/subvolume.hpp"
-#include "klib/log/typed.hpp"
 #include <iosfwd>
 
 namespace btrsnap {
@@ -24,12 +23,7 @@ class Instance {
 	auto clear_snapshots() -> std::vector<Result<Snapshot>>;
 
   private:
-	void on_save(Result<Snapshot> const& result) const;
-	void on_delete(std::span<Result<Snapshot> const> results) const;
-
 	auto delete_snapshots(int keep) -> std::vector<Result<Snapshot>>;
-
-	klib::log::Typed<Instance> m_log{};
 
 	std::vector<LoadedSubvolume> m_subvolumes{};
 };

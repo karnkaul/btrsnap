@@ -43,6 +43,13 @@ auto btrfs::create_snapshot(klib::CString const src, klib::CString const dst) ->
 	return format_error(result, dst.as_view());
 }
 
+auto btrfs::create_subvolume(klib::CString const path) -> Result<void> {
+	auto const resetter = ErrnoResetter{};
+	auto const result = ::btrfs_util_subvolume_create(path.c_str(), 0, nullptr, nullptr);
+	if (result == BTRFS_UTIL_OK) { return {}; }
+	return format_error(result, path.as_view());
+}
+
 auto btrfs::delete_subvolume(klib::CString const path) -> Result<void> {
 	auto const resetter = ErrnoResetter{};
 	auto const result = ::btrfs_util_subvolume_delete(path.c_str(), 0);

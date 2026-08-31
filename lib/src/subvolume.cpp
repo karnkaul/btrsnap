@@ -1,5 +1,6 @@
 #include "btrsnap/subvolume.hpp"
 #include "btrsnap/btrfs.hpp"
+#include "klib/log/typed.hpp"
 #include <algorithm>
 
 namespace btrsnap {
@@ -12,13 +13,26 @@ namespace {
 [[nodiscard]] auto delete_snapshot(Snapshot snapshot) -> Result<Snapshot> {
 	return btrfs::delete_subvolume(snapshot.path.string()).transform([&] { return std::move(snapshot); });
 }
+
+auto const log = klib::log::Typed<Subvolume>{};
 } // namespace
 
 auto Subvolume::create(fs::path path, std::string_view const snapshot_subdirectory) -> Result<Subvolume> {
+
+	auto result = btrfs::is_subvolume(path.string());
+	if (!result) { return std::unexpected{std::move(result.error())}; }
+
 	auto snapshot_directory = path / snapshot_subdirectory;
-	return btrfs::is_subvolume(path.string()).and_then([&] { return btrfs::is_subvolume(snapshot_directory.string()); }).transform([&] {
-		return Subvolume{std::move(path), std::move(snapshot_directory)};
-	});
+	if (!fs::exists(snapshot_directory)) {
+		result = btrfs::create_subvolume(snapshot_directory.string());
+		if (!result) { return std::unexpected{std::move(result.error())}; }
+		log.info("Created snapshot subvolume: {}", snapshot_directory.string());
+	}
+
+	result = btrfs::is_subvolume(snapshot_directory.string());
+	if (!result) { return std::unexpected{std::move(result.error())}; }
+
+	return Subvolume{std::move(path), std::move(snapshot_directory)};
 }
 
 auto Subvolume::get_all_snapshots() const -> std::vector<Snapshot> {
