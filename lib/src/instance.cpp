@@ -49,21 +49,25 @@ void Instance::clear_loaded_subvolumes() {
 }
 
 void Instance::print_snapshots(std::ostream& out) const {
+	auto const now = to_zoned_seconds(Clock::now());
 	for (auto const& subvolume : m_subvolumes) {
 		auto const snapshots = Subvolume::Snapshots{subvolume};
 		std::println(out, "{}/  ({}/{}):", subvolume.get_snapshot_directory().string(), snapshots.get_snapshots().size(), subvolume.snapshot_limit);
 		for (auto const [index, snapshot] : std::views::enumerate(snapshots.get_snapshots())) {
 			auto const number = int(index + 1);
-			std::println(out, "{}. {}/", number, snapshot.path.filename().string());
+			std::print(out, "{}. {}/", number, snapshot.path.filename().string());
+			if (snapshot.timestamp) { std::print(out, "  [{}]", format_delta_time(now, *snapshot.timestamp)); }
+			std::println(out);
 		}
 		std::println(out);
 	}
 }
 
 auto Instance::take_snapshots(Clock::time_point const timestamp) -> std::vector<Result<Snapshot>> {
+	auto const zoned_seconds = to_zoned_seconds(timestamp);
 	auto ret = std::vector<Result<Snapshot>>{};
 	for (auto& subvolume : m_subvolumes) {
-		auto result = subvolume.take_snapshot(timestamp);
+		auto result = subvolume.take_snapshot(zoned_seconds);
 		on_save(result);
 		ret.push_back(std::move(result));
 	}
@@ -85,5 +89,4 @@ auto Instance::delete_snapshots(int const keep) -> std::vector<Result<Snapshot>>
 	}
 	return ret;
 }
-
 } // namespace btrsnap
