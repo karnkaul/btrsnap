@@ -7,8 +7,8 @@ endif()
 
 if(NOT TARGET klib::klib)
   message(STATUS "[klib]")
-  set(KLIB_INSTALL ${DEPZIP_INSTALL})
-  set(KLIB_UNIT_TEST ${DEPZIP_BUILD_TESTS})
+  set(KLIB_INSTALL OFF)
+  set(KLIB_UNIT_TEST ${PROJECT_IS_TOP_LEVEL})
   add_subdirectory(src/klib)
 endif()
 
