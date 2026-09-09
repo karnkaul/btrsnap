@@ -8,6 +8,6 @@ namespace fs = std::filesystem;
 
 struct Snapshot {
 	fs::path path{};
-	std::optional<Clock::time_point> timestamp{};
+	std::optional<Timestamp> timestamp{};
 };
 } // namespace btrsnap

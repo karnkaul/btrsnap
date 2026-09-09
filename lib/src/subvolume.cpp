@@ -45,11 +45,10 @@ auto Subvolume::get_all_snapshots() const -> std::vector<Snapshot> {
 	return ret;
 }
 
-auto Subvolume::take_snapshot(ZonedSeconds const zoned_seconds) -> Result<Snapshot> {
-	auto subdirectory = m_snapshot_directory / to_pathname(zoned_seconds);
-	Clock::time_point t{zoned_seconds.get_local_time().time_since_epoch()};
+auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
+	auto subdirectory = m_snapshot_directory / to_pathname(timestamp);
 	return btrfs::create_snapshot(m_path.string(), subdirectory.string()).transform([&] {
-		return Snapshot{.path = std::move(subdirectory), .timestamp = Clock::time_point{zoned_seconds.get_local_time().time_since_epoch()}};
+		return Snapshot{.path = std::move(subdirectory), .timestamp = timestamp};
 	});
 }
 

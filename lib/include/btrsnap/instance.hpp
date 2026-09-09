@@ -18,7 +18,7 @@ class Instance {
 	void clear_loaded_subvolumes();
 
 	void print_snapshots(std::ostream& out) const;
-	auto take_snapshots(Clock::time_point timestamp = Clock::now()) -> std::vector<Result<Snapshot>>;
+	auto take_snapshots(Timestamp timestamp = current_timestamp()) -> std::vector<Result<Snapshot>>;
 	auto trim_snapshots() -> std::vector<Result<Snapshot>>;
 	auto clear_snapshots() -> std::vector<Result<Snapshot>>;
 

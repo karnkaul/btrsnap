@@ -41,21 +41,21 @@ class DurationSplitter {
 } // namespace
 } // namespace btrsnap
 
-auto btrsnap::to_timestamp(klib::CString const timestamp) -> std::optional<Clock::time_point> {
-	auto str = std::istringstream{timestamp.c_str()};
-	auto ret = Clock::time_point{};
-	if (str >> std::chrono::parse("%Y-%m-%d_%H-%M-%S", ret)) { return ret; }
+auto btrsnap::to_timestamp(klib::CString const serialized) -> std::optional<Timestamp> {
+	auto str = std::istringstream{serialized.c_str()};
+	auto ret = std::chrono::time_point<Clock, Timestamp>{};
+	if (str >> std::chrono::parse("%Y-%m-%d_%H-%M-%S", ret)) { return ret.time_since_epoch(); }
 	return {};
 }
 
-auto btrsnap::to_zoned_seconds(Clock::time_point const& timestamp) -> ZonedSeconds {
-	auto const clamped = std::chrono::time_point_cast<Seconds>(timestamp);
-	return std::chrono::zoned_time{std::chrono::current_zone(), clamped};
+auto btrsnap::current_timestamp() -> Timestamp {
+	auto const clamped = std::chrono::time_point_cast<Timestamp>(Clock::now());
+	return std::chrono::zoned_time{std::chrono::current_zone(), clamped}.get_local_time().time_since_epoch();
 }
 
-auto btrsnap::to_pathname(ZonedSeconds const& zoned_seconds) -> std::string { return std::format("{:%Y-%m-%d_%H-%M-%S}", zoned_seconds); }
-
-auto btrsnap::format_delta_time(ZonedSeconds const& now, Clock::time_point const& timestamp, int const num_largest) -> std::string {
-	auto const dt = now.get_local_time() - std::chrono::local_time{timestamp.time_since_epoch()};
-	return DurationSplitter{}(std::chrono::duration_cast<Seconds>(dt), num_largest);
+auto btrsnap::to_pathname(Timestamp const timestamp) -> std::string {
+	auto const time_point = std::chrono::time_point<Clock, Timestamp>{timestamp};
+	return std::format("{:%Y-%m-%d_%H-%M-%S}", time_point);
 }
+
+auto btrsnap::format_delta_time(Seconds const delta_time, int const num_largest) -> std::string { return DurationSplitter{}(delta_time, num_largest); }

@@ -15,7 +15,7 @@ class Subvolume {
 	[[nodiscard]] auto get_snapshot_directory() const -> fs::path const& { return m_snapshot_directory; }
 
 	[[nodiscard]] auto get_all_snapshots() const -> std::vector<Snapshot>;
-	[[nodiscard]] auto take_snapshot(ZonedSeconds zoned_seconds) -> Result<Snapshot>;
+	[[nodiscard]] auto take_snapshot(Timestamp timestamp) -> Result<Snapshot>;
 
   private:
 	explicit Subvolume(fs::path path, fs::path snapshot_directory) : m_path(std::move(path)), m_snapshot_directory(std::move(snapshot_directory)) {}

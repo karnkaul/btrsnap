@@ -29,11 +29,11 @@ TEST_CASE(subvolume_take_snapshot) {
 	auto subvolume = environment.create_subvolume();
 	ASSERT(subvolume.has_value());
 
-	auto const zoned_seconds = to_zoned_seconds(Clock::now());
-	auto result = subvolume->take_snapshot(zoned_seconds);
+	auto const timestamp = current_timestamp();
+	auto result = subvolume->take_snapshot(timestamp);
 	ASSERT(result.has_value());
 
-	auto const snapshot_name = to_pathname(zoned_seconds);
+	auto const snapshot_name = to_pathname(timestamp);
 	EXPECT(result->path.filename().string() == snapshot_name);
 
 	auto const snapshots = subvolume->get_all_snapshots();
