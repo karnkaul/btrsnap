@@ -4,10 +4,8 @@
 #include "common/test_directory.hpp"
 
 namespace btrsnap::test {
-class TestInstance : public Instance {
+class MockInstance : public Instance {
   public:
-	explicit TestInstance() : Instance(std::make_unique<MockBtrfs>()) {}
-
 	[[nodiscard]] auto get_test_directory() const -> fs::path const& { return m_test_dir.get_path(); }
 
 	[[nodiscard]] auto create_config(std::string_view subvolume_subpath) const -> Config {
@@ -15,6 +13,7 @@ class TestInstance : public Instance {
 	}
 
   private:
+	MockBtrfs m_btrfs{};
 	TestDirectory m_test_dir{};
 };
 } // namespace btrsnap::test
