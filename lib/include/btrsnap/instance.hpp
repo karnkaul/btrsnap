@@ -13,6 +13,8 @@ class LoadedSubvolume : public Subvolume {
 
 class Instance {
   public:
+	explicit Instance(klib::Ptr<IBtrfs const> btrfs = {});
+
 	auto load_subvolume(Config const& config) -> Result<void>;
 	[[nodiscard]] auto get_loaded_subvolumes() const -> std::span<LoadedSubvolume const> { return m_subvolumes; }
 	void clear_loaded_subvolumes();
@@ -24,6 +26,8 @@ class Instance {
 
   private:
 	auto delete_snapshots(int keep) -> std::vector<Result<Snapshot>>;
+
+	klib::Ptr<IBtrfs const> m_btrfs;
 
 	std::vector<LoadedSubvolume> m_subvolumes{};
 };

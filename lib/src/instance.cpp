@@ -31,8 +31,12 @@ void on_delete(std::span<Result<Snapshot> const> results) {
 LoadedSubvolume::LoadedSubvolume(Subvolume subvolume, int const snapshot_limit)
 	: Subvolume(std::move(subvolume)), snapshot_limit(std::max(snapshot_limit, 0)) {}
 
+Instance::Instance(klib::Ptr<IBtrfs const> btrfs) : m_btrfs(btrfs) {
+	if (!m_btrfs) { m_btrfs = &IBtrfs::get_default(); }
+}
+
 auto Instance::load_subvolume(Config const& config) -> Result<void> {
-	auto result = Subvolume::create(config.subvolume, config.subdirectory);
+	auto result = Subvolume::create(m_btrfs, config.subvolume, config.subdirectory);
 	if (!result) {
 		log.warn("Failed to load subvolume: {}", result.error().message);
 		return std::unexpected{std::move(result.error())};

@@ -6,6 +6,7 @@
 namespace btrsnap::test {
 class MockEnvironment {
   public:
+	[[nodiscard]] auto get_btrfs() const -> IBtrfs const& { return m_btrfs; }
 	[[nodiscard]] auto get_test_directory() const -> fs::path const& { return m_test_dir.get_path(); }
 
 	[[nodiscard]] auto path_to(fs::path const& subpath) const -> fs::path { return get_test_directory() / subpath; }

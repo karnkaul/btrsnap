@@ -1,4 +1,3 @@
-#include "detail/btrfs_impl.hpp"
 #include "btrsnap/btrfs.hpp"
 #include "detail/to_error.hpp"
 #include <format>
@@ -57,20 +56,11 @@ class Btrfs : public IBtrfs {
 		return format_error(result, path.as_view());
 	}
 };
-
-auto const g_default_btrfs = Btrfs{};
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
-auto g_btrfs = klib::Ptr<IBtrfs const>{&g_default_btrfs};
 } // namespace
 } // namespace detail
 
-void detail::set_btrfs(klib::Ptr<IBtrfs const> btrfs) {
-	if (!btrfs) { btrfs = &g_default_btrfs; }
-	g_btrfs = btrfs;
+auto IBtrfs::get_default() -> IBtrfs const& {
+	static auto const s_ret = detail::Btrfs{};
+	return s_ret;
 }
-
-auto btrfs::is_subvolume(klib::CString const path) -> Result<void> { return detail::g_btrfs->is_subvolume(path); }
-auto btrfs::create_snapshot(klib::CString const src, klib::CString const dst) -> Result<void> { return detail::g_btrfs->create_snapshot(src, dst); }
-auto btrfs::create_subvolume(klib::CString const path) -> Result<void> { return detail::g_btrfs->create_subvolume(path); }
-auto btrfs::delete_subvolume(klib::CString const path) -> Result<void> { return detail::g_btrfs->delete_subvolume(path); }
 } // namespace btrsnap
