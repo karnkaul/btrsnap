@@ -1,5 +1,5 @@
 #include "btrsnap/subvolume.hpp"
-#include "common/subvolume_environment.hpp"
+#include "common/environment.hpp"
 #include "klib/unit_test/unit_test.hpp"
 #include <unordered_set>
 
@@ -7,29 +7,30 @@ namespace btrsnap::test {
 namespace {
 using namespace std::chrono_literals;
 
+constexpr std::string_view subvolume_subpath_v{"subvol"};
+
 TEST_CASE(subvolume_create_with_existing_snapshots_dir) {
-	auto const environment = SubvolumeEnvironment{};
+	auto const environment = Environment{};
 
-	ASSERT(fs::create_directories(environment.get_snapshots_path()));
+	auto const snapshots_path = environment.get_snapshots_path(subvolume_subpath_v);
+	ASSERT(environment.get_btrfs().create_subvolume(snapshots_path.generic_string()));
 
-	auto subvolume = environment.create_subvolume();
+	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
-	EXPECT(subvolume->get_path() == environment.get_subvolume_path());
-	EXPECT(subvolume->get_snapshot_directory() == environment.get_snapshots_path());
+	EXPECT(subvolume->get_snapshot_directory() == snapshots_path);
 }
 
 TEST_CASE(subvolume_create_without_existing_snapshots_dir) {
-	auto const environment = SubvolumeEnvironment{};
+	auto const environment = Environment{};
 
-	auto subvolume = environment.create_subvolume();
+	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
-	EXPECT(subvolume->get_path() == environment.get_subvolume_path());
-	EXPECT(subvolume->get_snapshot_directory() == environment.get_snapshots_path());
+	EXPECT(subvolume->get_snapshot_directory() == environment.get_snapshots_path(subvolume_subpath_v));
 }
 
 TEST_CASE(subvolume_take_snapshot) {
-	auto const environment = SubvolumeEnvironment{};
-	auto subvolume = environment.create_subvolume();
+	auto const environment = Environment{};
+	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
 
 	auto const timestamp = current_timestamp();
@@ -46,8 +47,8 @@ TEST_CASE(subvolume_take_snapshot) {
 }
 
 TEST_CASE(subvolume_trim_snapshots) {
-	auto const environment = SubvolumeEnvironment{};
-	auto subvolume = environment.create_subvolume();
+	auto const environment = Environment{};
+	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
 
 	static constexpr auto create_v{3};
