@@ -1,6 +1,8 @@
 #pragma once
+#include "btrsnap/btrfs.hpp"
 #include "btrsnap/result.hpp"
 #include "btrsnap/snapshot.hpp"
+#include "klib/ptr.hpp"
 #include <span>
 #include <vector>
 
@@ -9,16 +11,19 @@ class Subvolume {
   public:
 	class Snapshots;
 
-	[[nodiscard]] static auto create(fs::path path, std::string_view snapshot_subdirectory) -> Result<Subvolume>;
+	[[nodiscard]] static auto create(klib::Ptr<IBtrfs const> btrfs, fs::path path, std::string_view snapshot_subdirectory) -> Result<Subvolume>;
 
 	[[nodiscard]] auto get_path() const -> fs::path const& { return m_path; }
 	[[nodiscard]] auto get_snapshot_directory() const -> fs::path const& { return m_snapshot_directory; }
 
 	[[nodiscard]] auto get_all_snapshots() const -> std::vector<Snapshot>;
-	[[nodiscard]] auto take_snapshot(Clock::time_point timestamp) -> Result<Snapshot>;
+	[[nodiscard]] auto take_snapshot(Timestamp timestamp) -> Result<Snapshot>;
 
   private:
-	explicit Subvolume(fs::path path, fs::path snapshot_directory) : m_path(std::move(path)), m_snapshot_directory(std::move(snapshot_directory)) {}
+	explicit Subvolume(klib::Ptr<IBtrfs const> btrfs, fs::path path, fs::path snapshot_directory)
+		: m_btrfs(btrfs), m_path(std::move(path)), m_snapshot_directory(std::move(snapshot_directory)) {}
+
+	klib::Ptr<IBtrfs const> m_btrfs;
 
 	fs::path m_path{};
 	fs::path m_snapshot_directory{};
@@ -32,6 +37,8 @@ class Subvolume::Snapshots {
 	[[nodiscard]] auto trim_snapshots(std::uint32_t keep) const -> std::vector<Result<Snapshot>>;
 
   private:
+	klib::Ptr<IBtrfs const> m_btrfs;
+
 	std::vector<Snapshot> m_snapshots{};
 };
 } // namespace btrsnap
