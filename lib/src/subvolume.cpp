@@ -17,7 +17,10 @@ namespace {
 auto const log = klib::log::Typed<Subvolume>{};
 } // namespace
 
-auto Subvolume::create(klib::Ptr<IBtrfs const> btrfs, fs::path path, std::string_view const snapshot_subdirectory) -> Result<Subvolume> {
+Subvolume::Subvolume(gsl::not_null<IBtrfs const*> btrfs, fs::path path, fs::path snapshot_directory)
+	: m_btrfs(btrfs), m_path(std::move(path)), m_snapshot_directory(std::move(snapshot_directory)) {}
+
+auto Subvolume::create(gsl::not_null<IBtrfs const*> btrfs, fs::path path, std::string_view const snapshot_subdirectory) -> Result<Subvolume> {
 	auto result = btrfs->is_subvolume(path.string());
 	if (!result) { return std::unexpected{std::move(result.error())}; }
 
