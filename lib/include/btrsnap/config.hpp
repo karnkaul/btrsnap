@@ -1,5 +1,6 @@
 #pragma once
 #include "klib/string/c_string.hpp"
+#include <chrono>
 #include <optional>
 #include <vector>
 
@@ -13,7 +14,10 @@ struct Config {
 	void print(std::string_view save_directory = directory_v) const;
 
 	std::string subvolume{};
-	std::string subdirectory{".snapshots"};
-	int limit{3};
+	std::string snapshots_subdirectory{".snapshots"};
+	int snapshot_limit{3};
+	std::string archive_subdirectory{".archive"};
+	std::chrono::days archive_period{7};
+	int archive_limit{3};
 };
 } // namespace btrsnap

@@ -8,6 +8,7 @@ namespace btrsnap::test {
 class Environment {
   public:
 	static constexpr std::string_view snapshots_subdirectory_v{".snapshots"};
+	static constexpr std::string_view archive_subdirectory_v{".archive"};
 
 	[[nodiscard]] auto get_btrfs() const -> IBtrfs const& { return m_btrfs; }
 	[[nodiscard]] auto get_test_directory() const -> fs::path const& { return m_test_dir.get_path(); }

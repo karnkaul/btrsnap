@@ -17,7 +17,7 @@ TEST_CASE(subvolume_create_with_existing_snapshots_dir) {
 
 	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
-	EXPECT(subvolume->get_snapshot_directory() == snapshots_path);
+	EXPECT(subvolume->get_snapshots_directory() == snapshots_path);
 }
 
 TEST_CASE(subvolume_create_without_existing_snapshots_dir) {
@@ -25,7 +25,7 @@ TEST_CASE(subvolume_create_without_existing_snapshots_dir) {
 
 	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
-	EXPECT(subvolume->get_snapshot_directory() == environment.get_snapshots_path(subvolume_subpath_v));
+	EXPECT(subvolume->get_snapshots_directory() == environment.get_snapshots_path(subvolume_subpath_v));
 }
 
 TEST_CASE(subvolume_take_snapshot) {
@@ -64,10 +64,7 @@ TEST_CASE(subvolume_trim_snapshots) {
 		expected_trimmed.push_back(std::move(result->path));
 	}
 
-	auto const subvolume_snapshots = Subvolume::Snapshots{*subvolume};
-	EXPECT(subvolume_snapshots.get_snapshots().size() == 3);
-
-	auto const results = subvolume_snapshots.trim_snapshots(keep_v);
+	auto const results = subvolume->delete_snapshots(keep_v);
 	EXPECT(results.size() == 2);
 	auto trimmed = std::unordered_set<fs::path>{};
 	for (auto const& result : results) {

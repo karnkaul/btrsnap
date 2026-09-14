@@ -1,6 +1,5 @@
 #include "btrsnap/instance.hpp"
 #include "klib/log/typed.hpp"
-#include <algorithm>
 #include <ostream>
 #include <print>
 #include <ranges>
@@ -26,20 +25,38 @@ void on_delete(std::span<Result<Snapshot> const> results) {
 		}
 	}
 }
+
+void print_snapshots(std::ostream& out, std::span<Snapshot const> snapshots, Timestamp const now) {
+	for (auto const [index, snapshot] : std::views::enumerate(snapshots)) {
+		auto const number = int(index + 1);
+		std::print(out, "{}. {}/", number, snapshot.path.filename().string());
+		if (snapshot.timestamp) { std::print(out, "  [{}]", format_delta_time(now - *snapshot.timestamp)); }
+		std::println(out);
+	}
+	std::println(out);
+}
+
+void print_manifest(std::ostream& out, Manifest const& manifest, Timestamp const now) {
+	std::println(out, "{}/", manifest.subvolume.generic_string());
+
+	std::println(out, "primary ({}/{}):", manifest.primary.size(), manifest.snapshots_limit);
+	print_snapshots(out, manifest.primary, now);
+
+	std::println(out, "archive ({}/{}):", manifest.archived.size(), manifest.archive_limit);
+	print_snapshots(out, manifest.archived, now);
+}
 } // namespace
 
-LoadedSubvolume::LoadedSubvolume(Subvolume subvolume, int const snapshot_limit)
-	: Subvolume(std::move(subvolume)), snapshot_limit(std::max(snapshot_limit, 0)) {}
-
 auto Instance::load_subvolume(Config const& config) -> Result<void> {
-	auto result = Subvolume::create(m_btrfs, config.subvolume, config.subdirectory);
+	auto result = Subvolume::create(m_btrfs, config);
 	if (!result) {
 		log.warn("Failed to load subvolume: {}", result.error().message);
 		return std::unexpected{std::move(result.error())};
 	}
 
-	auto const& loaded_subvolume = m_subvolumes.emplace_back(std::move(*result), config.limit);
-	log.info("Subvolume loaded: {} (snapshot limit: {})", loaded_subvolume.get_path().string(), loaded_subvolume.snapshot_limit);
+	log.info("Subvolume loaded: {} ({}, {}, {})", result->get_path().string(), result->get_snapshots_limit(), result->get_archive_period(),
+			 result->get_archive_limit());
+	m_subvolumes.push_back(std::move(*result));
 	return {};
 }
 
@@ -51,15 +68,8 @@ void Instance::clear_loaded_subvolumes() {
 void Instance::print_snapshots(std::ostream& out) const {
 	auto const now = current_timestamp();
 	for (auto const& subvolume : m_subvolumes) {
-		auto const snapshots = Subvolume::Snapshots{subvolume};
-		std::println(out, "{}/  ({}/{}):", subvolume.get_snapshot_directory().string(), snapshots.get_snapshots().size(), subvolume.snapshot_limit);
-		for (auto const [index, snapshot] : std::views::enumerate(snapshots.get_snapshots())) {
-			auto const number = int(index + 1);
-			std::print(out, "{}. {}/", number, snapshot.path.filename().string());
-			if (snapshot.timestamp) { std::print(out, "  [{}]", format_delta_time(now - *snapshot.timestamp)); }
-			std::println(out);
-		}
-		std::println(out);
+		auto const manifest = subvolume.build_manifest();
+		print_manifest(out, manifest, now);
 	}
 }
 
@@ -79,10 +89,9 @@ auto Instance::clear_snapshots() -> std::vector<Result<Snapshot>> { return delet
 
 auto Instance::delete_snapshots(int const keep) -> std::vector<Result<Snapshot>> {
 	auto ret = std::vector<Result<Snapshot>>{};
-	for (auto const& subvolume : m_subvolumes) {
-		auto const to_keep = keep < 0 ? subvolume.snapshot_limit : keep;
-		auto snapshots = Subvolume::Snapshots{subvolume};
-		auto results = snapshots.trim_snapshots(std::uint32_t(to_keep));
+	for (auto& subvolume : m_subvolumes) {
+		auto const to_keep = keep < 0 ? subvolume.get_snapshots_limit() : keep;
+		auto results = subvolume.delete_snapshots(std::uint32_t(to_keep));
 		on_delete(results);
 		ret.append_range(std::move(results));
 	}
