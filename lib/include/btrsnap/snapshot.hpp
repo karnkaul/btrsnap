@@ -1,7 +1,6 @@
 #pragma once
 #include "btrsnap/clock.hpp"
 #include <filesystem>
-#include <optional>
 #include <vector>
 
 namespace btrsnap {
@@ -9,7 +8,7 @@ namespace fs = std::filesystem;
 
 struct Snapshot {
 	fs::path path{};
-	std::optional<Timestamp> timestamp{};
+	Timestamp timestamp{};
 };
 
 struct Manifest {

@@ -40,9 +40,9 @@ TEST_CASE(subvolume_take_snapshot) {
 	auto const snapshot_name = to_pathname(timestamp);
 	EXPECT(result->path.filename().string() == snapshot_name);
 
-	auto const snapshots = subvolume->get_all_snapshots();
-	ASSERT(snapshots.size() == 1);
-	auto const& snapshot = snapshots.front();
+	auto const manifest = subvolume->build_manifest();
+	ASSERT(manifest.primary.size() == 1);
+	auto const& snapshot = manifest.primary.front();
 	EXPECT(snapshot.path.filename().string() == snapshot_name);
 }
 

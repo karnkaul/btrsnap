@@ -2,14 +2,16 @@
 #include "btrsnap/btrfs.hpp"
 #include "klib/log/typed.hpp"
 #include <algorithm>
+#include <optional>
 
 namespace btrsnap {
 namespace {
 using namespace std::chrono_literals;
 
-[[nodiscard]] auto to_snapshot(fs::path path) {
+[[nodiscard]] auto to_snapshot(fs::path path) -> std::optional<Snapshot> {
 	auto const timestamp = to_timestamp(path.filename().string());
-	return Snapshot{.path = std::move(path), .timestamp = timestamp};
+	if (!timestamp) { return {}; }
+	return Snapshot{.path = std::move(path), .timestamp = *timestamp};
 }
 
 [[nodiscard]] auto delete_snapshot(IBtrfs const& btrfs, Snapshot snapshot) -> Result<Snapshot> {
@@ -49,17 +51,6 @@ auto Subvolume::create(gsl::not_null<IBtrfs const*> btrfs, Config const& config)
 	return Subvolume{btrfs, config.subvolume, std::move(snapshot_directory), config};
 }
 
-auto Subvolume::get_all_snapshots() const -> std::vector<Snapshot> {
-	auto ret = std::vector<Snapshot>{};
-	auto err = std::error_code{};
-	for (auto const& it : fs::directory_iterator{m_snapshots_directory, err}) {
-		if (!it.is_directory()) { continue; }
-		if (!m_btrfs->is_subvolume(it.path().generic_string())) { continue; }
-		ret.push_back(to_snapshot(it.path()));
-	}
-	return ret;
-}
-
 auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
 	auto subdirectory = m_snapshots_directory / to_pathname(timestamp);
 	return m_btrfs->create_snapshot(m_path.string(), subdirectory.string()).transform([&] {
@@ -97,8 +88,8 @@ void Subvolume::push_snapshots_to(std::vector<Snapshot>& out, fs::path const& pa
 		if (path == m_snapshots_directory || path == m_archive_directory) { continue; }
 		if (!m_btrfs->is_subvolume(path.generic_string())) { continue; }
 		auto snapshot = to_snapshot(path);
-		if (!snapshot.timestamp) { continue; }
-		out.push_back(std::move(snapshot));
+		if (!snapshot) { continue; }
+		out.push_back(std::move(*snapshot));
 	}
 	std::ranges::sort(out, [](Snapshot const& a, Snapshot const& b) { return a.timestamp > b.timestamp; });
 }

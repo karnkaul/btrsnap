@@ -29,9 +29,7 @@ void on_delete(std::span<Result<Snapshot> const> results) {
 void print_snapshots(std::ostream& out, std::span<Snapshot const> snapshots, Timestamp const now) {
 	for (auto const [index, snapshot] : std::views::enumerate(snapshots)) {
 		auto const number = int(index + 1);
-		std::print(out, "{}. {}/", number, snapshot.path.filename().string());
-		if (snapshot.timestamp) { std::print(out, "  [{}]", format_delta_time(now - *snapshot.timestamp)); }
-		std::println(out);
+		std::println(out, "{}. {}/  [{}]", number, snapshot.path.filename().string(), format_delta_time(now - snapshot.timestamp));
 	}
 	std::println(out);
 }

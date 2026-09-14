@@ -19,7 +19,6 @@ class Subvolume {
 	[[nodiscard]] auto get_archive_period() const -> std::chrono::days { return m_archive_period; }
 	[[nodiscard]] auto get_archive_limit() const -> int { return m_archive_limit; }
 
-	[[nodiscard]] auto get_all_snapshots() const -> std::vector<Snapshot>;
 	[[nodiscard]] auto take_snapshot(Timestamp timestamp) -> Result<Snapshot>;
 	[[nodiscard]] auto delete_snapshots(std::uint32_t keep) -> std::vector<Result<Snapshot>>;
 
