@@ -57,15 +57,25 @@ auto Instance::take_snapshots(Timestamp const timestamp) -> std::vector<Result<S
 	return ret;
 }
 
-auto Instance::trim_snapshots() -> std::vector<Result<Snapshot>> { return delete_snapshots(-1); }
+auto Instance::trim_live_snapshots() -> std::vector<Result<Snapshot>> {
+	auto const func = [](Subvolume& subvolume) { return subvolume.delete_live_snapshots(std::uint32_t(subvolume.get_config().snapshot_limit)); };
+	return delete_snapshots(func);
+}
 
-auto Instance::clear_snapshots() -> std::vector<Result<Snapshot>> { return delete_snapshots(0); }
+auto Instance::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
+	auto const func = [](Subvolume& subvolume) {
+		auto ret = subvolume.delete_live_snapshots(0);
+		ret.append_range(subvolume.delete_archived_snapshots(0));
+		return ret;
+	};
+	return delete_snapshots(func);
+}
 
-auto Instance::delete_snapshots(int const keep) -> std::vector<Result<Snapshot>> {
+template <typename Func>
+auto Instance::delete_snapshots(Func func) -> std::vector<Result<Snapshot>> {
 	auto ret = std::vector<Result<Snapshot>>{};
 	for (auto& subvolume : m_subvolumes) {
-		auto const to_keep = keep < 0 ? subvolume.get_config().snapshot_limit : keep;
-		auto results = subvolume.delete_snapshots(std::uint32_t(to_keep));
+		auto results = func(subvolume);
 		on_delete(results);
 		ret.append_range(std::move(results));
 	}

@@ -80,14 +80,14 @@ auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
 	});
 }
 
-auto Subvolume::delete_snapshots(std::uint32_t const keep) -> std::vector<Result<Snapshot>> {
+auto Subvolume::delete_live_snapshots(std::uint32_t const keep) -> std::vector<Result<Snapshot>> {
 	auto snapshots = get_live_snapshots();
-	auto const to_delete = trim_front(snapshots, keep);
+	return delete_snapshots_from(std::move(snapshots), keep);
+}
 
-	auto ret = std::vector<Result<Snapshot>>{};
-	for (auto& snapshot : to_delete) { ret.push_back(delete_snapshot(*m_btrfs, std::move(snapshot))); }
-
-	return ret;
+auto Subvolume::delete_archived_snapshots(std::uint32_t const keep) -> std::vector<Result<Snapshot>> {
+	auto snapshots = get_archived_snapshots();
+	return delete_snapshots_from(std::move(snapshots), keep);
 }
 
 void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
@@ -104,19 +104,6 @@ void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
 	printer.print(snapshots);
 }
 
-void Subvolume::push_snapshots_to(std::vector<Snapshot>& out, fs::path const& path) const {
-	auto err = std::error_code{};
-	for (auto const& it : fs::directory_iterator{path, err}) {
-		if (!it.is_directory()) { continue; }
-		auto const& path = it.path();
-		if (!m_btrfs->is_subvolume(path.generic_string())) { continue; }
-		auto snapshot = to_snapshot(path);
-		if (!snapshot) { continue; }
-		out.push_back(std::move(*snapshot));
-	}
-	std::ranges::sort(out, [](Snapshot const& a, Snapshot const& b) { return a.timestamp > b.timestamp; });
-}
-
 auto Subvolume::get_snapshots_in(fs::path const& path) const -> std::vector<Snapshot> {
 	if (path.empty() || !fs::is_directory(path)) { return {}; }
 
@@ -131,6 +118,15 @@ auto Subvolume::get_snapshots_in(fs::path const& path) const -> std::vector<Snap
 		ret.push_back(std::move(*snapshot));
 	}
 	std::ranges::sort(ret, [](Snapshot const& a, Snapshot const& b) { return a.timestamp > b.timestamp; });
+	return ret;
+}
+
+auto Subvolume::delete_snapshots_from(std::vector<Snapshot> snapshots, std::uint32_t const keep) const -> std::vector<Result<Snapshot>> {
+	auto const to_delete = trim_front(snapshots, keep);
+
+	auto ret = std::vector<Result<Snapshot>>{};
+	for (auto& snapshot : to_delete) { ret.push_back(delete_snapshot(*m_btrfs, std::move(snapshot))); }
+
 	return ret;
 }
 } // namespace btrsnap

@@ -14,11 +14,12 @@ class Instance {
 
 	void print_snapshots(std::ostream& out) const;
 	auto take_snapshots(Timestamp timestamp = current_timestamp()) -> std::vector<Result<Snapshot>>;
-	auto trim_snapshots() -> std::vector<Result<Snapshot>>;
-	auto clear_snapshots() -> std::vector<Result<Snapshot>>;
+	auto trim_live_snapshots() -> std::vector<Result<Snapshot>>;
+	auto clear_all_snapshots() -> std::vector<Result<Snapshot>>;
 
   private:
-	auto delete_snapshots(int keep) -> std::vector<Result<Snapshot>>;
+	template <typename F>
+	auto delete_snapshots(F func) -> std::vector<Result<Snapshot>>;
 
 	gsl::not_null<IBtrfs const*> m_btrfs;
 

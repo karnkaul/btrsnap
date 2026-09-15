@@ -63,7 +63,7 @@ TEST_CASE(subvolume_trim_snapshots) {
 		expected_trimmed.push_back(std::move(result->path));
 	}
 
-	auto const results = subvolume->delete_snapshots(keep_v);
+	auto const results = subvolume->delete_live_snapshots(keep_v);
 	EXPECT(results.size() == 2);
 	auto trimmed = std::unordered_set<fs::path>{};
 	for (auto const& result : results) {

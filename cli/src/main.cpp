@@ -93,7 +93,7 @@ class App {
 	}
 
 	[[nodiscard]] auto clear_snapshots() -> int {
-		auto const results = m_instance.clear_snapshots();
+		auto const results = m_instance.clear_all_snapshots();
 		if (results.empty() || all_success(results)) { return EXIT_SUCCESS; }
 		return EXIT_FAILURE;
 	}
@@ -104,7 +104,7 @@ class App {
 			if (results.empty() || !all_success(results)) { return EXIT_FAILURE; }
 		}
 
-		if (!m_params.no_trim) { m_instance.trim_snapshots(); }
+		if (!m_params.no_trim) { m_instance.trim_live_snapshots(); }
 
 		return EXIT_SUCCESS;
 	}
