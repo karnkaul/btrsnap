@@ -1,8 +1,5 @@
 #include "btrsnap/instance.hpp"
 #include "klib/log/typed.hpp"
-#include <ostream>
-#include <print>
-#include <ranges>
 
 namespace btrsnap {
 namespace {
@@ -24,24 +21,6 @@ void on_delete(std::span<Result<Snapshot> const> results) {
 			log.info("Snapshot deleted: {}", result->path.generic_string());
 		}
 	}
-}
-
-void print_snapshots(std::ostream& out, std::span<Snapshot const> snapshots, Timestamp const now) {
-	for (auto const [index, snapshot] : std::views::enumerate(snapshots)) {
-		auto const number = int(index + 1);
-		std::println(out, "{}. {}/  [{}]", number, snapshot.path.filename().string(), format_delta_time(now - snapshot.timestamp));
-	}
-	std::println(out);
-}
-
-void print_manifest(std::ostream& out, Manifest const& manifest, Timestamp const now) {
-	std::println(out, "{}/", manifest.subvolume.generic_string());
-
-	std::println(out, "primary ({}/{}):", manifest.primary.size(), manifest.snapshots_limit);
-	print_snapshots(out, manifest.primary, now);
-
-	std::println(out, "archive ({}/{}):", manifest.archived.size(), manifest.archive_limit);
-	print_snapshots(out, manifest.archived, now);
 }
 } // namespace
 
@@ -65,10 +44,7 @@ void Instance::clear_loaded_subvolumes() {
 
 void Instance::print_snapshots(std::ostream& out) const {
 	auto const now = current_timestamp();
-	for (auto const& subvolume : m_subvolumes) {
-		auto const manifest = subvolume.build_manifest();
-		print_manifest(out, manifest, now);
-	}
+	for (auto const& subvolume : m_subvolumes) { subvolume.print_snapshots(out, now); }
 }
 
 auto Instance::take_snapshots(Timestamp const timestamp) -> std::vector<Result<Snapshot>> {
