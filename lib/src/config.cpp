@@ -44,9 +44,9 @@ auto Config::from_directory(std::string_view const directory) -> std::vector<Con
 		if (it.is_directory()) { continue; }
 
 		auto path = it.path();
-		if (it.is_symlink()) { path = klib::resolve_symlink(path.string()); }
+		if (it.is_symlink()) { path = klib::resolve_symlink(path.generic_string()); }
 
-		auto config = from_file(path.string());
+		auto config = from_file(path.generic_string());
 		if (!config) { continue; }
 
 		ret.push_back(std::move(*config));

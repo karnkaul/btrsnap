@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 
 TEST_CASE(config_from_file) {
 	auto const test_dir = TestDirectory{};
-	auto const config_path = (test_dir / "test.conf").string();
+	auto const config_path = (test_dir / "test.conf").generic_string();
 	static constexpr std::string_view text_v = R"(
 SUBVOLUME=subvolume
 SNAPSHOTS_SUBDIRECTORY=snapshots

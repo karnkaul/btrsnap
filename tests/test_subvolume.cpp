@@ -17,7 +17,7 @@ TEST_CASE(subvolume_create_with_existing_snapshots_dir) {
 
 	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
-	EXPECT(subvolume->get_snapshots_directory() == snapshots_path);
+	EXPECT(subvolume->get_config().get_snapshots_path() == snapshots_path);
 }
 
 TEST_CASE(subvolume_create_without_existing_snapshots_dir) {
@@ -25,7 +25,7 @@ TEST_CASE(subvolume_create_without_existing_snapshots_dir) {
 
 	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
-	EXPECT(subvolume->get_snapshots_directory() == environment.get_snapshots_path(subvolume_subpath_v));
+	EXPECT(subvolume->get_config().get_snapshots_path() == environment.get_snapshots_path(subvolume_subpath_v));
 }
 
 TEST_CASE(subvolume_take_snapshot) {

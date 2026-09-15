@@ -12,7 +12,7 @@ void on_save(Result<Snapshot> const& result) {
 	if (!result) {
 		log.error("Failed to take snapshot: {}", result.error().message);
 	} else {
-		log.info("Snapshot saved: {}", result->path.string());
+		log.info("Snapshot saved: {}", result->path.generic_string());
 	}
 }
 
@@ -21,7 +21,7 @@ void on_delete(std::span<Result<Snapshot> const> results) {
 		if (!result) {
 			log.error("Failed to delete snapshot: {}", result.error().message);
 		} else {
-			log.info("Snapshot deleted: {}", result->path.string());
+			log.info("Snapshot deleted: {}", result->path.generic_string());
 		}
 	}
 }
@@ -52,8 +52,8 @@ auto Instance::load_subvolume(Config const& config) -> Result<void> {
 		return std::unexpected{std::move(result.error())};
 	}
 
-	log.info("Subvolume loaded: {} ({}, {}, {})", result->get_path().string(), result->get_snapshots_limit(), result->get_archive_period(),
-			 result->get_archive_limit());
+	auto const& cfg = result->get_config();
+	log.info("Subvolume loaded: {} ({}, {}, {})", cfg.get_subvolume_path().generic_string(), cfg.snapshot_limit, cfg.archive_period, cfg.archive_limit);
 	m_subvolumes.push_back(std::move(*result));
 	return {};
 }
@@ -88,7 +88,7 @@ auto Instance::clear_snapshots() -> std::vector<Result<Snapshot>> { return delet
 auto Instance::delete_snapshots(int const keep) -> std::vector<Result<Snapshot>> {
 	auto ret = std::vector<Result<Snapshot>>{};
 	for (auto& subvolume : m_subvolumes) {
-		auto const to_keep = keep < 0 ? subvolume.get_snapshots_limit() : keep;
+		auto const to_keep = keep < 0 ? subvolume.get_config().snapshot_limit : keep;
 		auto results = subvolume.delete_snapshots(std::uint32_t(to_keep));
 		on_delete(results);
 		ret.append_range(std::move(results));

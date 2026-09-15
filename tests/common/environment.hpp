@@ -16,7 +16,7 @@ class Environment {
 	[[nodiscard]] auto path_to(std::string_view const subpath) const -> fs::path { return get_test_directory() / subpath; }
 
 	[[nodiscard]] auto create_config(std::string_view const subvolume_subpath) const -> Config {
-		return Config{.subvolume = (path_to(subvolume_subpath)).string()};
+		return Config{.subvolume = (path_to(subvolume_subpath)).generic_string()};
 	}
 
 	[[nodiscard]] auto get_snapshots_path(std::string_view subvolume_subpath) const -> fs::path;
