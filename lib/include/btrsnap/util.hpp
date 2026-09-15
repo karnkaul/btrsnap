@@ -6,5 +6,5 @@
 
 namespace btrsnap::util {
 [[nodiscard]] auto to_snapshot(IBtrfs const& btrfs, fs::path path) -> std::optional<Snapshot>;
-[[nodiscard]] auto to_sorted_snapshots(IBtrfs const& btrfs, fs::path const& parent) -> std::vector<Snapshot>;
+[[nodiscard]] auto list_snapshots(IBtrfs const& btrfs, fs::path const& parent) -> std::vector<Snapshot>;
 } // namespace btrsnap::util

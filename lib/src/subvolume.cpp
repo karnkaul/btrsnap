@@ -37,6 +37,11 @@ struct Printer {
 	Timestamp now{current_timestamp()};
 };
 
+[[nodiscard]] auto to_sorted(std::vector<Snapshot> snapshots) {
+	std::ranges::sort(snapshots, [](Snapshot const& a, Snapshot const& b) { return a.timestamp > b.timestamp; });
+	return snapshots;
+}
+
 auto const log = klib::log::Typed<Subvolume>{};
 } // namespace
 
@@ -63,9 +68,9 @@ auto Subvolume::create(gsl::not_null<IBtrfs const*> btrfs, Config config) -> Res
 	return Subvolume{btrfs, std::move(config)};
 }
 
-auto Subvolume::get_live_snapshots() const -> std::vector<Snapshot> { return util::to_sorted_snapshots(*m_btrfs, m_config.get_snapshots_path()); }
+auto Subvolume::get_live_snapshots() const -> std::vector<Snapshot> { return to_sorted(util::list_snapshots(*m_btrfs, m_config.get_snapshots_path())); }
 
-auto Subvolume::get_archived_snapshots() const -> std::vector<Snapshot> { return util::to_sorted_snapshots(*m_btrfs, m_config.get_archive_path()); }
+auto Subvolume::get_archived_snapshots() const -> std::vector<Snapshot> { return to_sorted(util::list_snapshots(*m_btrfs, m_config.get_archive_path())); }
 
 auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
 	auto subdirectory = m_config.get_snapshots_path() / to_pathname(timestamp);
