@@ -8,7 +8,7 @@ class Instance {
   public:
 	explicit Instance(gsl::not_null<IBtrfs const*> btrfs = &IBtrfs::get_default()) : m_btrfs(btrfs) {}
 
-	auto load_subvolume(Config const& config) -> Result<void>;
+	auto load_subvolume(Config config) -> Result<void>;
 	[[nodiscard]] auto get_loaded_subvolumes() const -> std::span<Subvolume const> { return m_subvolumes; }
 	void clear_loaded_subvolumes();
 

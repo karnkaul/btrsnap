@@ -1,21 +1,15 @@
 #include "btrsnap/subvolume.hpp"
 #include "btrsnap/btrfs.hpp"
+#include "btrsnap/util.hpp"
 #include "klib/log/typed.hpp"
 #include <algorithm>
 #include <iostream>
-#include <optional>
 #include <print>
 #include <ranges>
 
 namespace btrsnap {
 namespace {
 using namespace std::chrono_literals;
-
-[[nodiscard]] auto to_snapshot(fs::path path) -> std::optional<Snapshot> {
-	auto const timestamp = to_timestamp(path.filename().string());
-	if (!timestamp) { return {}; }
-	return Snapshot{.path = std::move(path), .timestamp = *timestamp};
-}
 
 [[nodiscard]] auto delete_snapshot(IBtrfs const& btrfs, Snapshot snapshot) -> Result<Snapshot> {
 	return btrfs.delete_subvolume(snapshot.path.generic_string()).transform([&] { return std::move(snapshot); });
@@ -69,9 +63,9 @@ auto Subvolume::create(gsl::not_null<IBtrfs const*> btrfs, Config config) -> Res
 	return Subvolume{btrfs, std::move(config)};
 }
 
-auto Subvolume::get_live_snapshots() const -> std::vector<Snapshot> { return get_snapshots_in(m_config.get_snapshots_path()); }
+auto Subvolume::get_live_snapshots() const -> std::vector<Snapshot> { return util::to_sorted_snapshots(*m_btrfs, m_config.get_snapshots_path()); }
 
-auto Subvolume::get_archived_snapshots() const -> std::vector<Snapshot> { return get_snapshots_in(m_config.get_archive_path()); }
+auto Subvolume::get_archived_snapshots() const -> std::vector<Snapshot> { return util::to_sorted_snapshots(*m_btrfs, m_config.get_archive_path()); }
 
 auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
 	auto subdirectory = m_config.get_snapshots_path() / to_pathname(timestamp);
@@ -102,23 +96,6 @@ void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
 	snapshots = get_archived_snapshots();
 	std::println(out, "archive ({}/{}):", snapshots.size(), m_config.archive_limit);
 	printer.print(snapshots);
-}
-
-auto Subvolume::get_snapshots_in(fs::path const& path) const -> std::vector<Snapshot> {
-	if (path.empty() || !fs::is_directory(path)) { return {}; }
-
-	auto ret = std::vector<Snapshot>{};
-	auto err = std::error_code{};
-	for (auto const& it : fs::directory_iterator{path, err}) {
-		if (!it.is_directory()) { continue; }
-		auto const& path = it.path();
-		if (!m_btrfs->is_subvolume(path.generic_string())) { continue; }
-		auto snapshot = to_snapshot(path);
-		if (!snapshot) { continue; }
-		ret.push_back(std::move(*snapshot));
-	}
-	std::ranges::sort(ret, [](Snapshot const& a, Snapshot const& b) { return a.timestamp > b.timestamp; });
-	return ret;
 }
 
 auto Subvolume::delete_snapshots_from(std::vector<Snapshot> snapshots, std::uint32_t const keep) const -> std::vector<Result<Snapshot>> {

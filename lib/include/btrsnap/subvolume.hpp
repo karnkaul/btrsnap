@@ -25,7 +25,6 @@ class Subvolume {
   private:
 	explicit Subvolume(gsl::not_null<IBtrfs const*> btrfs, Config config);
 
-	[[nodiscard]] auto get_snapshots_in(fs::path const& path) const -> std::vector<Snapshot>;
 	[[nodiscard]] auto delete_snapshots_from(std::vector<Snapshot> snapshots, std::uint32_t keep) const -> std::vector<Result<Snapshot>>;
 
 	gsl::not_null<IBtrfs const*> m_btrfs;

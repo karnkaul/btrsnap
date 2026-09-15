@@ -24,8 +24,8 @@ void on_delete(std::span<Result<Snapshot> const> results) {
 }
 } // namespace
 
-auto Instance::load_subvolume(Config const& config) -> Result<void> {
-	auto result = Subvolume::create(m_btrfs, config);
+auto Instance::load_subvolume(Config config) -> Result<void> {
+	auto result = Subvolume::create(m_btrfs, std::move(config));
 	if (!result) {
 		log.warn("Failed to load subvolume: {}", result.error().message);
 		return std::unexpected{std::move(result.error())};
