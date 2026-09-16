@@ -2,6 +2,7 @@
 #include "btrsnap/btrfs.hpp"
 #include "btrsnap/recycler.hpp"
 #include "btrsnap/util.hpp"
+#include "klib/cli/text_table.hpp"
 #include "klib/log/typed.hpp"
 #include <algorithm>
 #include <iostream>
@@ -16,15 +17,33 @@ constexpr void clamp_limit(int& out) { out = std::max(out, 0); }
 constexpr void clamp_period(std::chrono::days& out) { out = std::max(std::chrono::days{1}, out); }
 
 struct Printer {
-	void print(std::span<Snapshot const> snapshots) const {
-		for (auto const [index, snapshot] : std::views::enumerate(snapshots)) {
-			auto const number = int(index + 1);
-			std::println(out, "{}. {}/  [{}]", number, snapshot.path.filename().string(), format_delta_time(now - snapshot.timestamp));
-		}
-		std::println(out);
+	void print(std::span<Snapshot const> live, std::span<Snapshot const> archive) const {
+		auto const subvolume = config.get_subvolume_path();
+
+		auto prefix = std::format("{}/", subvolume.generic_string());
+		auto table = klib::TextTable::Builder{}.add_column(std::move(prefix)).add_column("Age").add_column("Metadata").build();
+
+		auto const add_snapshots = [&](std::span<Snapshot const> snapshots, std::string_view type, int limit) {
+			for (auto const [index, snapshot] : std::views::enumerate(snapshots)) {
+				auto const number = int(index + 1);
+				auto const relative_path = fs::relative(snapshot.path, subvolume);
+				auto row = std::vector{
+					relative_path.generic_string(),
+					format_delta_time(now - snapshot.timestamp),
+					std::format("{} {}/{}", type, number, limit),
+				};
+				table.push_row(std::move(row));
+			}
+		};
+
+		add_snapshots(live, "L", config.snapshot_limit);
+		add_snapshots(archive, "A", config.archive_limit);
+
+		std::println(out, "{}", table.serialize());
 	}
 
 	std::ostream& out;
+	Config const& config;
 
 	Timestamp now{current_timestamp()};
 };
@@ -91,16 +110,7 @@ auto Subvolume::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
 }
 
 void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
-	std::println(out, "{}/", m_config.get_subvolume_path().generic_string());
-
-	auto const printer = Printer{.out = out, .now = now};
-
-	auto snapshots = get_live_snapshots();
-	std::println(out, "live ({}/{}):", snapshots.size(), m_config.snapshot_limit);
-	printer.print(snapshots);
-
-	snapshots = get_archived_snapshots();
-	std::println(out, "archived ({}/{} @ {}):", snapshots.size(), m_config.archive_limit, m_config.archive_period);
-	printer.print(snapshots);
+	auto const printer = Printer{.out = out, .config = m_config, .now = now};
+	printer.print(get_live_snapshots(), get_archived_snapshots());
 }
 } // namespace btrsnap

@@ -30,6 +30,8 @@ Invoking `btrsnap` takes a snapshot and garbage-collects oldest snapshots across
 
 Create a configuration file for a subvolume by passing `--generate=/path/to/subvolume`, and save one or more such files to `/etc/btrsnap/`. Snapshots are stored in `/path/to/subvolume/.snapshots` by default (configurable), and limited to `3` by default (also configurable). The snapshots sub-path must also be a subvolume.
 
+Since v0.2, a snapshot **archive** is also supported, located at `/path/to/subvolume/.snapshots/.archive` by default with the same limit as **live** snapshots, and a default period of 7 days. Retired live snapshots will be moved into the archive if the timestamp difference is greater than or equal to the configured period. Remaining retired snapshots (including ones that failed to be archived) are deleted as before, to match the configured limits of both locations.
+
 Pass `--list` to print a list of existing snapshots across all configured subvolumes. Pass `--clear` to delete **ALL** saved snapshots.
 
 ### Scheduling
