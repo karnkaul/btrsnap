@@ -1,5 +1,6 @@
 #include "btrsnap/recycler.hpp"
 #include "btrsnap/util.hpp"
+#include "klib/log/typed.hpp"
 
 namespace btrsnap {
 namespace {
@@ -11,12 +12,14 @@ namespace {
 	sorted.resize(std::size_t(excess_count));
 	return sorted;
 }
+
+auto const log = klib::log::Typed<Recycler>{};
 } // namespace
 
 auto Recycler::recycle_snapshots(Config const& config) const -> Report {
 	auto excess = get_excess_live_snapshots(config);
 	if (excess.empty()) {
-		m_log.info("No snapshots to recycle");
+		log.info("No snapshots to recycle");
 		return {};
 	}
 
@@ -59,9 +62,9 @@ auto Recycler::delete_snapshots(std::vector<Snapshot> snapshots) const -> std::v
 	for (auto& snapshot : snapshots) {
 		auto const result = m_btrfs->delete_subvolume(snapshot.path.generic_string());
 		if (!result) {
-			m_log.warn("Failed to delete snapshot: {}", result.error().message);
+			log.warn("Failed to delete snapshot: {}", result.error().message);
 		} else {
-			m_log.info("Deleted snapshot: {}", snapshot.path.generic_string());
+			log.info("Snapshot deleted: {}", snapshot.path.generic_string());
 		}
 		ret.push_back(result.transform([&] { return std::move(snapshot); }));
 	}
@@ -80,7 +83,7 @@ auto Recycler::populate_archive(Config const& config, std::span<Snapshot const> 
 
 	auto err = std::error_code{};
 	if (!fs::exists(archive_path) && !fs::create_directories(archive_path, err)) {
-		m_log.warn("Failed to create archive directory: {}", archive_path.generic_string());
+		log.warn("Failed to create archive directory: {}", archive_path.generic_string());
 		return {};
 	}
 
@@ -95,9 +98,9 @@ auto Recycler::populate_archive(Config const& config, std::span<Snapshot const> 
 		auto dst = archive_path / src.path.filename();
 		fs::rename(src.path, dst, err);
 		if (err != std::error_code{}) {
-			m_log.warn("Failed to archive snapshot: {}", src.path.generic_string());
+			log.warn("Failed to archive snapshot: {}", src.path.generic_string());
 		} else {
-			m_log.info("Snapshot archived: {}", dst.generic_string());
+			log.info("Snapshot archived: {}", dst.generic_string());
 			latest_timestamp = src.timestamp;
 			ret.push_back(Snapshot{.path = std::move(dst), .timestamp = src.timestamp});
 		}

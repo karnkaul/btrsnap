@@ -2,7 +2,6 @@
 #include "btrsnap/btrfs.hpp"
 #include "btrsnap/config.hpp"
 #include "btrsnap/recycle_report.hpp"
-#include "klib/log/typed.hpp"
 #include <gsl/pointers>
 
 namespace btrsnap {
@@ -28,8 +27,6 @@ class Recycler {
 
   private:
 	[[nodiscard]] auto get_sorted_snapshots_in(fs::path const& path) const -> std::vector<Snapshot>;
-
-	klib::log::Typed<Recycler> m_log{};
 
 	gsl::not_null<IBtrfs const*> m_btrfs;
 };

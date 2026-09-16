@@ -4,14 +4,6 @@
 namespace btrsnap {
 namespace {
 auto const log = klib::log::Typed<Instance>{};
-
-void on_save(Result<Snapshot> const& result) {
-	if (!result) {
-		log.error("Failed to take snapshot: {}", result.error().message);
-	} else {
-		log.info("Snapshot saved: {}", result->path.generic_string());
-	}
-}
 } // namespace
 
 auto Instance::load_subvolume(Config config) -> Result<void> {
@@ -39,11 +31,7 @@ void Instance::print_snapshots(std::ostream& out) const {
 
 auto Instance::take_snapshots(Timestamp const timestamp) -> std::vector<Result<Snapshot>> {
 	auto ret = std::vector<Result<Snapshot>>{};
-	for (auto& subvolume : m_subvolumes) {
-		auto result = subvolume.take_snapshot(timestamp);
-		on_save(result);
-		ret.push_back(std::move(result));
-	}
+	for (auto& subvolume : m_subvolumes) { ret.push_back(subvolume.take_snapshot(timestamp)); }
 	return ret;
 }
 

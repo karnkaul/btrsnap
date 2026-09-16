@@ -35,6 +35,14 @@ struct Printer {
 }
 
 auto const log = klib::log::Typed<Subvolume>{};
+
+void on_save(Result<Snapshot> const& result) {
+	if (!result) {
+		log.error("Failed to take snapshot: {}", result.error().message);
+	} else {
+		log.info("Snapshot saved: {}", result->path.generic_string());
+	}
+}
 } // namespace
 
 Subvolume::Subvolume(gsl::not_null<IBtrfs const*> btrfs, Config config) : m_btrfs(btrfs), m_config(std::move(config)) {}
@@ -66,9 +74,11 @@ auto Subvolume::get_archived_snapshots() const -> std::vector<Snapshot> { return
 
 auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
 	auto subdirectory = m_config.get_snapshots_path() / to_pathname(timestamp);
-	return m_btrfs->create_snapshot(m_config.get_subvolume_path().generic_string(), subdirectory.generic_string()).transform([&] {
+	auto ret = m_btrfs->create_snapshot(m_config.get_subvolume_path().generic_string(), subdirectory.generic_string()).transform([&] {
 		return Snapshot{.path = std::move(subdirectory), .timestamp = timestamp};
 	});
+	on_save(ret);
+	return ret;
 }
 
 auto Subvolume::recycle_snapshots() -> RecycleReport { return Recycler{m_btrfs}.recycle_snapshots(m_config); }
