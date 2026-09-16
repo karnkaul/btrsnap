@@ -86,11 +86,11 @@ void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
 	auto const printer = Printer{.out = out, .now = now};
 
 	auto snapshots = get_live_snapshots();
-	std::println(out, "primary ({}/{}):", snapshots.size(), m_config.snapshot_limit);
+	std::println(out, "live ({}/{}):", snapshots.size(), m_config.snapshot_limit);
 	printer.print(snapshots);
 
 	snapshots = get_archived_snapshots();
-	std::println(out, "archive ({}/{}):", snapshots.size(), m_config.archive_limit);
+	std::println(out, "archived ({}/{} @ {}):", snapshots.size(), m_config.archive_limit, m_config.archive_period);
 	printer.print(snapshots);
 }
 } // namespace btrsnap
