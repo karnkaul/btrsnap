@@ -12,16 +12,6 @@ void on_save(Result<Snapshot> const& result) {
 		log.info("Snapshot saved: {}", result->path.generic_string());
 	}
 }
-
-void on_delete(std::span<Result<Snapshot> const> results) {
-	for (auto const& result : results) {
-		if (!result) {
-			log.error("Failed to delete snapshot: {}", result.error().message);
-		} else {
-			log.info("Snapshot deleted: {}", result->path.generic_string());
-		}
-	}
-}
 } // namespace
 
 auto Instance::load_subvolume(Config config) -> Result<void> {
@@ -57,28 +47,15 @@ auto Instance::take_snapshots(Timestamp const timestamp) -> std::vector<Result<S
 	return ret;
 }
 
-auto Instance::trim_live_snapshots() -> std::vector<Result<Snapshot>> {
-	auto const func = [](Subvolume& subvolume) { return subvolume.delete_live_snapshots(std::uint32_t(subvolume.get_config().snapshot_limit)); };
-	return delete_snapshots(func);
+auto Instance::recycle_snapshots() -> RecycleReport {
+	auto ret = RecycleReport{};
+	for (auto& subvolume : m_subvolumes) { ret.append(subvolume.recycle_snapshots()); }
+	return ret;
 }
 
 auto Instance::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
-	auto const func = [](Subvolume& subvolume) {
-		auto ret = subvolume.delete_live_snapshots(0);
-		ret.append_range(subvolume.delete_archived_snapshots(0));
-		return ret;
-	};
-	return delete_snapshots(func);
-}
-
-template <typename Func>
-auto Instance::delete_snapshots(Func func) -> std::vector<Result<Snapshot>> {
 	auto ret = std::vector<Result<Snapshot>>{};
-	for (auto& subvolume : m_subvolumes) {
-		auto results = func(subvolume);
-		on_delete(results);
-		ret.append_range(std::move(results));
-	}
+	for (auto& subvolume : m_subvolumes) { ret.append_range(subvolume.clear_all_snapshots()); }
 	return ret;
 }
 } // namespace btrsnap

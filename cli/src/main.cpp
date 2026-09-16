@@ -43,8 +43,8 @@ class App {
 					clap::named_option(m_params.generate_for_subvolume, "g,generate", "generate config for SUBVOLUME", &m_params.generate),
 					clap::named_option(m_params.custom_config_path, "c,config", "path to custom config"),
 					clap::named_flag(m_params.list, "l,list", "list snapshots"),
-					clap::named_flag(m_params.no_trim, "n,no-trim", "skip trimming snapshots"),
-					clap::named_flag(m_params.only_trim, "t,trim", "only trim existing snapshots"),
+					clap::named_flag(m_params.no_recycle, "n,no-recycle", "skip recycling snapshots"),
+					clap::named_flag(m_params.only_recycle, "r,recycle", "only recycle existing snapshots"),
 					clap::named_flag(m_params.clear, "clear", "clear ALL saved snapshots"),
 				},
 			.program =
@@ -99,12 +99,12 @@ class App {
 	}
 
 	[[nodiscard]] auto take_snapshots() -> int {
-		if (!m_params.only_trim) {
+		if (!m_params.only_recycle) {
 			auto const results = m_instance.take_snapshots();
 			if (results.empty() || !all_success(results)) { return EXIT_FAILURE; }
 		}
 
-		if (!m_params.no_trim) { m_instance.trim_live_snapshots(); }
+		if (!m_params.no_recycle) { m_instance.recycle_snapshots(); }
 
 		return EXIT_SUCCESS;
 	}
@@ -114,8 +114,8 @@ class App {
 		std::string custom_config_path{};
 		bool generate{};
 		bool list{};
-		bool no_trim{};
-		bool only_trim{};
+		bool no_recycle{};
+		bool only_recycle{};
 		bool clear{};
 	};
 

@@ -1,7 +1,6 @@
 #include "btrsnap/subvolume.hpp"
 #include "common/environment.hpp"
 #include "klib/unit_test/unit_test.hpp"
-#include <unordered_set>
 
 namespace btrsnap::test {
 namespace {
@@ -45,33 +44,20 @@ TEST_CASE(subvolume_take_snapshot) {
 	EXPECT(snapshots.front().path.filename().string() == snapshot_name);
 }
 
-TEST_CASE(subvolume_trim_snapshots) {
+TEST_CASE(subvolume_clear_snapshots) {
 	auto const environment = Environment{};
 	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 	ASSERT(subvolume.has_value());
 
-	static constexpr auto create_v{3};
-	static constexpr auto keep_v{1};
-
 	auto timestamp = current_timestamp();
-	auto expected_trimmed = std::vector<fs::path>{};
-	for (auto i = 1; i <= create_v; ++i) {
+	for (auto i = 0; i < 5; ++i) {
 		auto result = subvolume->take_snapshot(timestamp);
 		ASSERT(result.has_value());
-		timestamp -= 10min;
-		if (i <= keep_v) { continue; }
-		expected_trimmed.push_back(std::move(result->path));
+		timestamp += 30min;
 	}
 
-	auto const results = subvolume->delete_live_snapshots(keep_v);
-	EXPECT(results.size() == 2);
-	auto trimmed = std::unordered_set<fs::path>{};
-	for (auto const& result : results) {
-		ASSERT(result.has_value());
-		trimmed.insert(result->path);
-	}
-
-	for (auto const& expected : expected_trimmed) { EXPECT(trimmed.contains(expected)); }
+	auto snapshots = subvolume->clear_all_snapshots();
+	EXPECT(snapshots.size() == 5);
 }
 } // namespace
 } // namespace btrsnap::test

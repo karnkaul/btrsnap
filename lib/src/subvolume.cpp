@@ -1,5 +1,6 @@
 #include "btrsnap/subvolume.hpp"
 #include "btrsnap/btrfs.hpp"
+#include "btrsnap/recycler.hpp"
 #include "btrsnap/util.hpp"
 #include "klib/log/typed.hpp"
 #include <algorithm>
@@ -11,17 +12,8 @@ namespace btrsnap {
 namespace {
 using namespace std::chrono_literals;
 
-[[nodiscard]] auto delete_snapshot(IBtrfs const& btrfs, Snapshot snapshot) -> Result<Snapshot> {
-	return btrfs.delete_subvolume(snapshot.path.generic_string()).transform([&] { return std::move(snapshot); });
-}
-
 constexpr void clamp_limit(int& out) { out = std::max(out, 0); }
 constexpr void clamp_period(std::chrono::days& out) { out = std::max(std::chrono::days{1}, out); }
-
-auto trim_front(std::span<Snapshot> list, std::uint32_t const keep) -> std::span<Snapshot> {
-	if (list.size() < std::size_t(keep)) { return {}; }
-	return list.subspan(std::size_t(keep));
-}
 
 struct Printer {
 	void print(std::span<Snapshot const> snapshots) const {
@@ -79,14 +71,13 @@ auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
 	});
 }
 
-auto Subvolume::delete_live_snapshots(std::uint32_t const keep) -> std::vector<Result<Snapshot>> {
-	auto snapshots = get_live_snapshots();
-	return delete_snapshots_from(std::move(snapshots), keep);
-}
+auto Subvolume::recycle_snapshots() -> RecycleReport { return Recycler{m_btrfs}.recycle_snapshots(m_config); }
 
-auto Subvolume::delete_archived_snapshots(std::uint32_t const keep) -> std::vector<Result<Snapshot>> {
-	auto snapshots = get_archived_snapshots();
-	return delete_snapshots_from(std::move(snapshots), keep);
+auto Subvolume::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
+	auto recycler = Recycler{m_btrfs};
+	auto snapshots = recycler.get_live_snapshots(m_config);
+	snapshots.append_range(recycler.get_archived_snapshots(m_config));
+	return recycler.delete_snapshots(std::move(snapshots));
 }
 
 void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
@@ -101,14 +92,5 @@ void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
 	snapshots = get_archived_snapshots();
 	std::println(out, "archive ({}/{}):", snapshots.size(), m_config.archive_limit);
 	printer.print(snapshots);
-}
-
-auto Subvolume::delete_snapshots_from(std::vector<Snapshot> snapshots, std::uint32_t const keep) const -> std::vector<Result<Snapshot>> {
-	auto const to_delete = trim_front(snapshots, keep);
-
-	auto ret = std::vector<Result<Snapshot>>{};
-	for (auto& snapshot : to_delete) { ret.push_back(delete_snapshot(*m_btrfs, std::move(snapshot))); }
-
-	return ret;
 }
 } // namespace btrsnap
