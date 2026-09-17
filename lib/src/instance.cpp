@@ -24,11 +24,6 @@ void Instance::clear_loaded_subvolumes() {
 	log.info("Subvolumes cleared");
 }
 
-void Instance::print_snapshots(std::ostream& out) const {
-	auto const now = current_timestamp();
-	for (auto const& subvolume : m_subvolumes) { subvolume.print_snapshots(out, now); }
-}
-
 auto Instance::take_snapshots(Timestamp const timestamp) -> std::vector<Result<Snapshot>> {
 	auto ret = std::vector<Result<Snapshot>>{};
 	for (auto& subvolume : m_subvolumes) { ret.push_back(subvolume.take_snapshot(timestamp)); }
@@ -45,5 +40,10 @@ auto Instance::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
 	auto ret = std::vector<Result<Snapshot>>{};
 	for (auto& subvolume : m_subvolumes) { ret.append_range(subvolume.clear_all_snapshots()); }
 	return ret;
+}
+
+void Instance::print_snapshots(std::ostream& out) const {
+	auto const now = current_timestamp();
+	for (auto const& subvolume : m_subvolumes) { subvolume.print_snapshots(out, now); }
 }
 } // namespace btrsnap

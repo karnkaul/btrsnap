@@ -12,10 +12,10 @@ class Instance {
 	[[nodiscard]] auto get_loaded_subvolumes() const -> std::span<Subvolume const> { return m_subvolumes; }
 	void clear_loaded_subvolumes();
 
-	void print_snapshots(std::ostream& out) const;
 	auto take_snapshots(Timestamp timestamp = current_timestamp()) -> std::vector<Result<Snapshot>>;
 	auto recycle_snapshots() -> RecycleReport;
 	auto clear_all_snapshots() -> std::vector<Result<Snapshot>>;
+	void print_snapshots(std::ostream& out) const;
 
   private:
 	gsl::not_null<IBtrfs const*> m_btrfs;

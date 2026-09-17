@@ -18,10 +18,8 @@ class Subvolume {
 	[[nodiscard]] auto get_archived_snapshots() const -> std::vector<Snapshot>;
 
 	[[nodiscard]] auto take_snapshot(Timestamp timestamp) -> Result<Snapshot>;
-
 	auto recycle_snapshots() -> RecycleReport;
 	auto clear_all_snapshots() -> std::vector<Result<Snapshot>>;
-
 	void print_snapshots(std::ostream& out, Timestamp now = current_timestamp()) const;
 
   private:
