@@ -12,9 +12,9 @@ class DurationSplitter {
 		m_remain = in;
 		m_to_append = num_largest;
 
-		subtract<std::chrono::years>();
-		subtract<std::chrono::months>();
-		subtract<std::chrono::weeks>();
+		subtract<std::chrono::years>("y");
+		subtract<std::chrono::months>("m");
+		subtract<std::chrono::weeks>("w");
 		subtract<std::chrono::days>();
 		subtract<std::chrono::hours>();
 		subtract<std::chrono::minutes>();
@@ -24,13 +24,17 @@ class DurationSplitter {
 
   private:
 	template <typename DurationT>
-	void subtract() {
+	void subtract(std::string_view const unit = {}) {
 		if (m_to_append <= 0) { return; }
 		auto const duration = std::chrono::duration_cast<DurationT>(m_remain);
 		if (m_ret.empty() && duration == 0s) { return; }
 		m_remain -= duration;
 		if (!m_ret.empty()) { m_ret.push_back(' '); }
-		std::format_to(std::back_inserter(m_ret), "{}", duration);
+		if (unit.empty()) {
+			std::format_to(std::back_inserter(m_ret), "{}", duration);
+		} else {
+			std::format_to(std::back_inserter(m_ret), "{}{}", duration.count(), unit);
+		}
 		--m_to_append;
 	}
 
