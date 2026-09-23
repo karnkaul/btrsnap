@@ -4,31 +4,22 @@
 #include <iosfwd>
 
 namespace btrsnap {
-class LoadedSubvolume : public Subvolume {
-  public:
-	explicit LoadedSubvolume(Subvolume subvolume, int snapshot_limit);
-
-	int snapshot_limit;
-};
-
 class Instance {
   public:
-	explicit Instance(klib::Ptr<IBtrfs const> btrfs = {});
+	explicit Instance(gsl::not_null<IBtrfs const*> btrfs = &IBtrfs::get_default()) : m_btrfs(btrfs) {}
 
-	auto load_subvolume(Config const& config) -> Result<void>;
-	[[nodiscard]] auto get_loaded_subvolumes() const -> std::span<LoadedSubvolume const> { return m_subvolumes; }
+	auto load_subvolume(Config config) -> Result<void>;
+	[[nodiscard]] auto get_loaded_subvolumes() const -> std::span<Subvolume const> { return m_subvolumes; }
 	void clear_loaded_subvolumes();
 
-	void print_snapshots(std::ostream& out) const;
 	auto take_snapshots(Timestamp timestamp = current_timestamp()) -> std::vector<Result<Snapshot>>;
-	auto trim_snapshots() -> std::vector<Result<Snapshot>>;
-	auto clear_snapshots() -> std::vector<Result<Snapshot>>;
+	auto recycle_snapshots() -> RecycleReport;
+	auto clear_all_snapshots() -> std::vector<Result<Snapshot>>;
+	void print_snapshots(std::ostream& out) const;
 
   private:
-	auto delete_snapshots(int keep) -> std::vector<Result<Snapshot>>;
+	gsl::not_null<IBtrfs const*> m_btrfs;
 
-	klib::Ptr<IBtrfs const> m_btrfs;
-
-	std::vector<LoadedSubvolume> m_subvolumes{};
+	std::vector<Subvolume> m_subvolumes{};
 };
 } // namespace btrsnap

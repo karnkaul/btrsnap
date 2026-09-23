@@ -15,7 +15,7 @@ class TestDirectory {
 
 	explicit TestDirectory(fs::path const& path = ".test") : m_path(fs::absolute(path)) {
 		if (fs::exists(m_path)) { fs::remove_all(m_path); }
-		if (!fs::create_directories(m_path)) { throw std::runtime_error{std::format("Failed to create test directory: {}", m_path.string())}; }
+		if (!fs::create_directories(m_path)) { throw std::runtime_error{std::format("Failed to create test directory: {}", m_path.generic_string())}; }
 	}
 
 	~TestDirectory() { fs::remove_all(m_path); }

@@ -6,7 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_DEBUG_POSTFIX "-d")
 
 set(package_name btrsnap)
-project(${package_name} VERSION 0.1.4)
+project(${package_name} VERSION 0.2.1)
 
 option(BTRSNAP_BUILD_TESTS "Build btrsnap tests" ${PROJECT_IS_TOP_LEVEL})
 

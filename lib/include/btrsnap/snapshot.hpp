@@ -1,13 +1,12 @@
 #pragma once
 #include "btrsnap/clock.hpp"
 #include <filesystem>
-#include <optional>
 
 namespace btrsnap {
 namespace fs = std::filesystem;
 
 struct Snapshot {
 	fs::path path{};
-	std::optional<Timestamp> timestamp{};
+	Timestamp timestamp{};
 };
 } // namespace btrsnap
