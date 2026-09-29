@@ -5,6 +5,11 @@ if(NOT TARGET confy::confy)
   add_subdirectory(src/confy)
 endif()
 
+if(NOT TARGET djson::djson)
+  message(STATUS "[djson]")
+  add_subdirectory(src/djson)
+endif()
+
 if(NOT TARGET klib::klib)
   message(STATUS "[klib]")
   set(KLIB_INSTALL OFF)

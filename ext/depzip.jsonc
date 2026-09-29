@@ -5,6 +5,10 @@
       "branch": "v0.1.1"
     },
     {
+      "uri": "karnkaul/djson",
+      "branch": "v3.1.5"
+    },
+    {
       "uri": "karnkaul/klib",
       "branch": "v0.6.9"
     },
