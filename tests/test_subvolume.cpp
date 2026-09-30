@@ -2,7 +2,7 @@
 #include "common/environment.hpp"
 #include "klib/unit_test/unit_test.hpp"
 
-namespace btrsnap::test::foo {
+namespace btrsnap::test {
 namespace {
 using namespace std::chrono_literals;
 
@@ -57,4 +57,4 @@ TEST_CASE(subvolume_clear_snapshots) {
 	EXPECT(snapshots.size() == 5);
 }
 } // namespace
-} // namespace btrsnap::test::foo
+} // namespace btrsnap::test

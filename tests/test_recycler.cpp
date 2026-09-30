@@ -2,7 +2,7 @@
 #include "common/environment.hpp"
 #include "klib/unit_test/unit_test.hpp"
 
-namespace btrsnap::test::foo {
+namespace btrsnap::test {
 namespace {
 using namespace std::chrono_literals;
 
@@ -12,8 +12,8 @@ struct Fixture {
 	static constexpr auto recycle_v = RecycleInfo{.snapshot_limit = 2, .archive_limit = 2, .archive_period = std::chrono::days{1}};
 
 	Environment environment{};
-	btrsnap::foo::Recycler recycler{&environment.get_btrfs()};
-	btrsnap::foo::Subvolume subvolume{environment.create_subvolume(subvolume_subpath_v, subvolume_name_v, recycle_v).value()};
+	Recycler recycler{&environment.get_btrfs()};
+	Subvolume subvolume{environment.create_subvolume(subvolume_subpath_v, subvolume_name_v, recycle_v).value()};
 };
 
 struct Snapshotter {
@@ -25,7 +25,7 @@ struct Snapshotter {
 		}
 	}
 
-	btrsnap::foo::Subvolume& subvolume;
+	Subvolume& subvolume;
 
 	Seconds delta{12h};
 	Seconds next_timestamp{current_timestamp()};
@@ -44,7 +44,7 @@ TEST_CASE(recycler_noop) {
 	auto fixture = Fixture{};
 	Snapshotter{.subvolume = fixture.subvolume, .delta = 24h}.take_snapshots(Fixture::recycle_v.snapshot_limit);
 	auto live_snapshots = fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
-	auto excess_snapshots = btrsnap::foo::Recycler::get_excess_snapshots(std::move(live_snapshots), Fixture::recycle_v.snapshot_limit);
+	auto excess_snapshots = Recycler::get_excess_snapshots(std::move(live_snapshots), Fixture::recycle_v.snapshot_limit);
 	EXPECT(excess_snapshots.empty());
 }
 
@@ -55,7 +55,7 @@ TEST_CASE(recycler_archive_single) {
 	Snapshotter{.subvolume = fixture.subvolume, .delta = 12h, .next_timestamp = expected_timestamp}.take_snapshots(Fixture::recycle_v.snapshot_limit + 1);
 
 	auto live_snapshots = fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
-	auto snapshots = btrsnap::foo::Recycler::get_excess_snapshots(std::move(live_snapshots), Fixture::recycle_v.snapshot_limit);
+	auto snapshots = Recycler::get_excess_snapshots(std::move(live_snapshots), Fixture::recycle_v.snapshot_limit);
 
 	ASSERT(snapshots.size() == 1);
 	EXPECT(snapshots.front().timestamp == expected_timestamp);
@@ -98,4 +98,4 @@ TEST_CASE(recycler_recycle_multiple) {
 	EXPECT(int(report.deleted.size()) == pre_recycle_count - post_recycle_count);
 }
 } // namespace
-} // namespace btrsnap::test::foo
+} // namespace btrsnap::test

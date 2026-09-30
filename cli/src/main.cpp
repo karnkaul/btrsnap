@@ -73,7 +73,7 @@ class App {
 	}
 
 	[[nodiscard]] auto setup_instance() -> bool {
-		auto instance = foo::Instance::create(m_instance_info.storage);
+		auto instance = Instance::create(m_instance_info.storage);
 		if (!instance) {
 			std::println("Failed to create Instance: {}", instance.error().message);
 			return false;
@@ -121,7 +121,7 @@ class App {
 	Params m_params{};
 
 	InstanceInfo m_instance_info{};
-	std::optional<foo::Instance> m_instance{};
+	std::optional<Instance> m_instance{};
 };
 } // namespace
 } // namespace btrsnap::cli
