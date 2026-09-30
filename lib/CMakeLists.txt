@@ -9,7 +9,6 @@ target_link_libraries(${package_name}-lib
   djson::djson
 
   PRIVATE
-  confy::confy
   btrfsutil
 )
 
