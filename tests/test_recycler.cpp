@@ -88,11 +88,11 @@ TEST_CASE(recycler_recycle_multiple) {
 	EXPECT(report.deleted.empty());
 
 	snapshotter.take_snapshots(3); // limit + 3 live, 1 archive
-	auto const pre_recycle_count = int(fixture.subvolume.get_live_snapshots().size() + fixture.subvolume.get_archived_snapshots().size());
+	auto const pre_recycle_count = static_cast<int>(fixture.subvolume.get_live_snapshots().size() + fixture.subvolume.get_archived_snapshots().size());
 	EXPECT(pre_recycle_count == Fixture::recycle_v.snapshot_limit + 3 + 1);
 
 	report = fixture.recycler.recycle_snapshots(fixture.subvolume.get_storage(), Fixture::recycle_v); // limit live, limit archive
-	auto const post_recycle_count = int(fixture.subvolume.get_live_snapshots().size() + fixture.subvolume.get_archived_snapshots().size());
+	auto const post_recycle_count = static_cast<int>(fixture.subvolume.get_live_snapshots().size() + fixture.subvolume.get_archived_snapshots().size());
 	EXPECT(post_recycle_count == Fixture::recycle_v.snapshot_limit + Fixture::recycle_v.archive_limit);
 
 	EXPECT(int(report.deleted.size()) == pre_recycle_count - post_recycle_count);

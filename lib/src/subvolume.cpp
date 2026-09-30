@@ -21,7 +21,7 @@ struct Printer {
 
 		auto const add_snapshots = [&](std::span<Snapshot const> snapshots, std::string_view type, int limit) {
 			for (auto const [index, snapshot] : std::views::enumerate(snapshots)) {
-				auto const number = int(index + 1);
+				auto const number = static_cast<int>(index + 1);
 				auto row = std::vector{
 					snapshot.path.filename().string(),
 					format_delta_time(now - snapshot.timestamp),

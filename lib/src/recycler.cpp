@@ -38,7 +38,7 @@ auto Recycler::get_sorted_snapshots_in(fs::path const& path) const -> std::vecto
 }
 
 auto Recycler::get_excess_snapshots(std::vector<Snapshot> sorted, int const keep) -> std::vector<Snapshot> {
-	auto const excess_count = int(sorted.size()) - keep;
+	auto const excess_count = static_cast<int>(sorted.size()) - keep;
 	if (excess_count <= 0) { return {}; }
 
 	// pop snapshots to keep.
