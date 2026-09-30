@@ -20,12 +20,6 @@ class App {
 		auto const parse_result = parse_args(argc, argv);
 		if (parse_result.should_early_exit()) { return parse_result.return_code(); }
 
-		if (m_params.generate) {
-			auto const config = Config{.subvolume = std::string{m_params.generate_for_subvolume}};
-			config.print();
-			return EXIT_SUCCESS;
-		}
-
 		if (!load_config()) { return EXIT_FAILURE; }
 		KLIB_ASSERT(!m_instance_info.subvolumes.empty());
 
@@ -43,7 +37,6 @@ class App {
 		auto spec = clap::spec::Parameters{
 			.parameters =
 				{
-					clap::named_option(m_params.generate_for_subvolume, "g,generate", "generate config for SUBVOLUME", &m_params.generate),
 					clap::named_option(m_params.custom_config_path, "c,config", "path to custom config"),
 					clap::named_flag(m_params.list, "l,list", "list snapshots"),
 					clap::named_flag(m_params.no_recycle, "n,no-recycle", "skip recycling snapshots"),
@@ -117,7 +110,6 @@ class App {
 	}
 
 	struct Params {
-		std::string_view generate_for_subvolume{};
 		std::string custom_config_path{};
 		bool generate{};
 		bool list{};
