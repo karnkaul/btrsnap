@@ -1,8 +1,11 @@
 #include "btrsnap/build_version.hpp"
 #include "btrsnap/instance.hpp"
+#include "btrsnap/util.hpp"
 #include "clap/parser.hpp"
+#include "djson/json.hpp"
 #include "klib/debug/assert.hpp"
 #include <iostream>
+#include <optional>
 #include <print>
 
 namespace btrsnap::cli {
@@ -17,17 +20,11 @@ class App {
 		auto const parse_result = parse_args(argc, argv);
 		if (parse_result.should_early_exit()) { return parse_result.return_code(); }
 
-		if (m_params.generate) {
-			auto const config = Config{.subvolume = std::string{m_params.generate_for_subvolume}};
-			config.print();
-			return EXIT_SUCCESS;
-		}
-
-		if (!fill_configs()) { return EXIT_FAILURE; }
-		KLIB_ASSERT(!m_configs.empty());
+		if (!load_config()) { return EXIT_FAILURE; }
+		KLIB_ASSERT(!m_instance_info.subvolumes.empty());
 
 		if (!setup_instance()) { return EXIT_FAILURE; }
-		KLIB_ASSERT(!m_instance.get_loaded_subvolumes().empty());
+		KLIB_ASSERT(!m_instance->get_loaded_subvolumes().empty());
 
 		if (m_params.list) { return print_snapshots(); }
 		if (m_params.clear) { return clear_snapshots(); }
@@ -40,7 +37,6 @@ class App {
 		auto spec = clap::spec::Parameters{
 			.parameters =
 				{
-					clap::named_option(m_params.generate_for_subvolume, "g,generate", "generate config for SUBVOLUME", &m_params.generate),
 					clap::named_option(m_params.custom_config_path, "c,config", "path to custom config"),
 					clap::named_flag(m_params.list, "l,list", "list snapshots"),
 					clap::named_flag(m_params.no_recycle, "n,no-recycle", "skip recycling snapshots"),
@@ -57,60 +53,63 @@ class App {
 		return parser.parse_main(argc, argv);
 	}
 
-	[[nodiscard]] auto fill_configs() -> bool {
-		if (!m_params.custom_config_path.empty()) {
-			auto custom_config = Config::from_file(m_params.custom_config_path);
-			if (!custom_config) {
-				std::println(stderr, "Failed to load config from: {}", m_params.custom_config_path);
-				return false;
-			}
+	[[nodiscard]] auto load_config() -> bool {
+		auto config_path = std::string_view{m_params.custom_config_path};
+		if (config_path.empty()) { config_path = "/etc/btrsnap.jsonc"; }
 
-			m_configs.push_back(std::move(*custom_config));
-			return true;
+		auto json = dj::Json::from_file(config_path);
+		if (!json) {
+			std::println(stderr, "Failed to load config from: {}", config_path);
+			return false;
 		}
 
-		m_configs = Config::from_directory();
-		if (!m_configs.empty()) { return true; }
+		util::from_json(*json, m_instance_info);
+		if (m_instance_info.subvolumes.empty()) {
+			std::println(stderr, "No subvolumes found in: {}", config_path);
+			return false;
+		}
 
-		std::println(stderr, "No valid configs found in: {}", Config::directory_v);
-		return false;
+		return true;
 	}
 
 	[[nodiscard]] auto setup_instance() -> bool {
-		auto loaded = 0;
-		for (auto const& config : m_configs) {
-			if (m_instance.load_subvolume(config)) { ++loaded; }
+		auto instance = Instance::create(m_instance_info.storage);
+		if (!instance) {
+			std::println("Failed to create Instance: {}", instance.error().message);
+			return false;
 		}
-		if (loaded > 0) { return true; }
+
+		m_instance.emplace(std::move(*instance));
+		m_instance->load_subvolumes(std::move(m_instance_info.subvolumes));
+		if (!m_instance->get_loaded_subvolumes().empty()) { return true; }
 
 		std::println(stderr, "No valid subvolumes in loaded configs");
 		return false;
 	}
 
 	[[nodiscard]] auto print_snapshots() const -> int {
-		m_instance.print_snapshots(std::cout);
+		m_instance->print_snapshots(std::cout);
 		return EXIT_SUCCESS;
 	}
 
 	[[nodiscard]] auto clear_snapshots() -> int {
-		auto const results = m_instance.clear_all_snapshots();
+		auto const results = m_instance->clear_all_snapshots();
 		if (results.empty() || all_success(results)) { return EXIT_SUCCESS; }
 		return EXIT_FAILURE;
 	}
 
 	[[nodiscard]] auto take_snapshots() -> int {
 		if (!m_params.only_recycle) {
-			auto const results = m_instance.take_snapshots();
+			auto const results = m_instance->take_snapshots();
 			if (results.empty() || !all_success(results)) { return EXIT_FAILURE; }
 		}
 
-		if (!m_params.no_recycle) { m_instance.recycle_snapshots(); }
+		if (!m_params.no_recycle) { m_instance->recycle_snapshots(); }
 
 		return EXIT_SUCCESS;
 	}
 
 	struct Params {
-		std::string_view generate_for_subvolume{};
 		std::string custom_config_path{};
 		bool generate{};
 		bool list{};
@@ -121,8 +120,8 @@ class App {
 
 	Params m_params{};
 
-	std::vector<Config> m_configs{};
-	Instance m_instance{};
+	InstanceInfo m_instance_info{};
+	std::optional<Instance> m_instance{};
 };
 } // namespace
 } // namespace btrsnap::cli

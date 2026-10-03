@@ -42,6 +42,13 @@ class Btrfs : public IBtrfs {
 		return format_error(result, dst.as_view());
 	}
 
+	[[nodiscard]] auto create_readonly_snapshot(klib::CString const src, klib::CString const dst) const -> Result<void> final {
+		auto const resetter = ErrnoResetter{};
+		auto const result = ::btrfs_util_subvolume_snapshot(src.c_str(), dst.c_str(), BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY, nullptr, nullptr);
+		if (result == BTRFS_UTIL_OK) { return {}; }
+		return format_error(result, dst.as_view());
+	}
+
 	[[nodiscard]] auto create_subvolume(klib::CString const path) const -> Result<void> final {
 		auto const resetter = ErrnoResetter{};
 		auto const result = ::btrfs_util_subvolume_create(path.c_str(), 0, nullptr, nullptr);

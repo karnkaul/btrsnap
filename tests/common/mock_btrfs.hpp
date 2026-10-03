@@ -13,6 +13,7 @@ class MockBtrfs : public IBtrfs {
 
 	[[nodiscard]] auto is_subvolume(klib::CString const path) const -> Result<void> final { return is_directory(path.as_view()); }
 	[[nodiscard]] auto create_snapshot(klib::CString /*src*/, klib::CString const dst) const -> Result<void> final { return create_directory(dst.as_view()); }
+	[[nodiscard]] auto create_readonly_snapshot(klib::CString src, klib::CString const dst) const -> Result<void> final { return create_snapshot(src, dst); }
 	[[nodiscard]] auto create_subvolume(klib::CString const path) const -> Result<void> final { return create_directory(path.as_view()); }
 	[[nodiscard]] auto delete_subvolume(klib::CString const path) const -> Result<void> final { return delete_directory(path.as_view()); }
 };

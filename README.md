@@ -26,13 +26,41 @@ This is experimental and hobbyist software, it is strongly recommended to use (m
 
 ## Usage
 
-Invoking `btrsnap` takes a snapshot and garbage-collects oldest snapshots across all configured subvolumes. Unless the subvolumes are mounted with permissions for users to create (and delete) snapshots, this will require privileged execution.
+Invoking `btrsnap` takes a snapshot and recycles oldest snapshots across all configured subvolumes. Unless the subvolumes are mounted with permissions for users to create (and delete) snapshots, this will require privileged execution.
 
-Create a configuration file for a subvolume by passing `--generate=/path/to/subvolume`, and save one or more such files to `/etc/btrsnap/`. Snapshots are stored in `/path/to/subvolume/.snapshots` by default (configurable), and limited to `3` by default (also configurable). The snapshots sub-path must also be a subvolume.
+`btrsnap` requires a storage root, defaulting to `/btrsnap`: a directory where all snapshots (live and archived) for all subvolumes will be created and stored. While `btrsnap` will create subdirectories as needed, the storage root is required to already exist. It is recommended to have a separate btrfs subvolume mounted somewhere on the filesystem for this path.
 
-Since v0.2, a snapshot **archive** is also supported, located at `/path/to/subvolume/.snapshots/.archive` by default with the same limit as **live** snapshots, and a default period of 7 days. Retired live snapshots will be moved into the archive if the timestamp difference is greater than or equal to the configured period. Remaining retired snapshots (including ones that failed to be archived) are deleted as before, to match the configured limits of both locations.
+```
+├── <storage-root>/
+│   ├── snapshots/
+│   │   └── <subvolume_name>/
+│   │       └── <subvolume_timestamp>
+│   │       └── ...
+│   │   └── ...
+│   └── archive
+│       └── ...
+```
+
+Since v0.2, a snapshot **archive** is also supported, by default with the same limit as **live** snapshots, and a default period of 7 days. Retired live snapshots will be moved into the archive if the timestamp difference is greater than or equal to the configured period. Remaining retired snapshots (including ones that failed to be archived) are deleted as before, to match the configured limits of both locations.
 
 Pass `--list` to print a list of existing snapshots across all configured subvolumes. Pass `--clear` to delete **ALL** saved snapshots.
+
+### Configuration
+
+`btrsnap` requires a JSON configuration file - `/etc/btrsnap.jsonc` by default - that lists each desired subvolume's name and path.
+
+```json
+{
+  "subvolumes": [
+    {
+      "name": "@home",
+      "path": "/@home"
+    }
+  ]
+}
+```
+
+[JSON schema](schema.json).
 
 ### Scheduling
 

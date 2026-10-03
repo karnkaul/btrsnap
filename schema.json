@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "btrsnap config schema",
+  "type": "object",
+  "properties": {
+    "storage": {
+      "type": "string"
+    },
+    "subvolumes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "recycle": {
+            "type": "object",
+            "properties": {
+              "snapshot_limit": {
+                "type": "integer"
+              },
+              "archive_period_days": {
+                "type": "integer"
+              },
+              "archive_limit": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "required": [
+          "name",
+          "path"
+        ]
+      }
+    }
+  },
+  "required": [
+    "subvolumes"
+  ]
+}
