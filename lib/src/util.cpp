@@ -38,6 +38,20 @@ auto util::list_snapshots(IBtrfs const& btrfs, fs::path const& parent) -> std::v
 	return ret;
 }
 
+auto util::copy_snapshot(IBtrfs const& btrfs, Snapshot const& source, fs::path const& dst_dir) -> Result<Snapshot> {
+	return ensure_directory(dst_dir).and_then([&] -> Result<Snapshot> {
+		auto const filename = source.path.filename();
+		auto destination = dst_dir / filename;
+		if (fs::exists(destination)) {
+			auto message = std::format("Destination already exists: {}", destination.generic_string());
+			return detail::to_error(Error::Type::InvalidArgument, message);
+		}
+		return btrfs.create_snapshot(source.path.generic_string(), destination.generic_string()).transform([&] {
+			return Snapshot{.path = std::move(destination), .timestamp = source.timestamp};
+		});
+	});
+}
+
 auto util::is_non_empty(fs::path const& path) -> Result<void> {
 	if (path.empty()) { return detail::to_error(Error::Type::InvalidArgument, "Empty path"); }
 	return {};
