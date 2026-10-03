@@ -16,23 +16,19 @@ constexpr void clamp_limit(int& out) { out = std::max(out, 0); }
 constexpr void clamp_period(std::chrono::days& out) { out = std::max(std::chrono::days{1}, out); }
 
 struct Printer {
-	void print(std::span<Snapshot const> live, std::span<Snapshot const> archive) const {
-		auto table = klib::TextTable::Builder{}.add_column(std::string{subvolume}).add_column("Age").add_column("Metadata").build();
+	void print(SnapshotList const& list) const {
+		auto table = klib::TextTable::Builder{}.add_column("id").add_column(std::string{subvolume}).add_column("Age").build();
 
-		auto const add_snapshots = [&](std::span<Snapshot const> snapshots, std::string_view type, int limit) {
-			for (auto const [index, snapshot] : std::views::enumerate(snapshots)) {
-				auto const number = static_cast<int>(index + 1);
-				auto row = std::vector{
-					snapshot.path.filename().string(),
-					format_delta_time(now - snapshot.timestamp),
-					std::format("{} {}/{}", type, number, limit),
-				};
-				table.push_row(std::move(row));
-			}
-		};
-
-		add_snapshots(live, "L", recycle.snapshot_limit);
-		add_snapshots(archive, "A", recycle.archive_limit);
+		for (auto const [index, entry] : std::views::enumerate(list.entries)) {
+			std::string_view const suffix = entry.is_archived ? " [a]" : "";
+			auto filename = std::format("{}{}", entry.snapshot.path.filename().string(), suffix);
+			auto row = std::vector{
+				std::format("{:> 2}", static_cast<int>(entry.number)),
+				std::move(filename),
+				format_delta_time(now - entry.snapshot.timestamp),
+			};
+			table.push_row(std::move(row));
+		}
 
 		std::println(out, "{}", table.serialize());
 	}
@@ -46,11 +42,11 @@ struct Printer {
 
 auto const log = klib::log::Typed<Subvolume>{};
 
-void on_save(Result<Snapshot> const& result) {
+void on_action(Result<Snapshot> const& result, std::string_view const action) {
 	if (!result) {
-		log.error("Failed to take snapshot: {}", result.error().message);
+		log.error("Failed to {} snapshot: {}", action, result.error().message);
 	} else {
-		log.info("Snapshot saved: {}", result->path.generic_string());
+		log.info("Snapshot {}d: {}", action, result->path.generic_string());
 	}
 }
 } // namespace
@@ -80,7 +76,7 @@ auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
 	auto ret = m_btrfs->create_snapshot(m_info.path.generic_string(), subdirectory.generic_string()).transform([&] {
 		return Snapshot{.path = std::move(subdirectory), .timestamp = timestamp};
 	});
-	on_save(ret);
+	on_action(ret, "save");
 	return ret;
 }
 
@@ -94,6 +90,6 @@ auto Subvolume::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
 
 void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
 	auto const printer = Printer{.out = out, .subvolume = m_info.name, .recycle = m_info.recycle, .now = now};
-	printer.print(get_live_snapshots(), get_archived_snapshots());
+	printer.print(Recycler{m_btrfs}.get_snapshot_list(m_storage));
 }
 } // namespace btrsnap
