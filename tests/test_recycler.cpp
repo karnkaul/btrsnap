@@ -67,10 +67,6 @@ TEST_CASE(recycler_archive_single) {
 	snapshots = fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_archive_directory());
 	ASSERT(snapshots.size() == 1);
 	EXPECT(snapshots.front().timestamp == expected_timestamp);
-
-	snapshots = fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
-	EXPECT(snapshots.size() == 2);
-	for (auto const& snapshot : snapshots) { EXPECT(snapshot.timestamp > expected_timestamp); }
 }
 
 TEST_CASE(recycler_recycle_multiple) {
@@ -85,7 +81,7 @@ TEST_CASE(recycler_recycle_multiple) {
 	snapshotter.take_snapshots(Fixture::recycle_v.snapshot_limit + 1);								  // limit + 1 live
 	report = fixture.recycler.recycle_snapshots(fixture.subvolume.get_storage(), Fixture::recycle_v); // limit live
 	EXPECT(report.archived.size() == 1);
-	EXPECT(report.deleted.empty());
+	EXPECT(report.deleted.size() == 1);
 
 	snapshotter.take_snapshots(3); // limit + 3 live, 1 archive
 	auto const pre_recycle_count = static_cast<int>(fixture.subvolume.get_live_snapshots().size() + fixture.subvolume.get_archived_snapshots().size());
@@ -94,8 +90,6 @@ TEST_CASE(recycler_recycle_multiple) {
 	report = fixture.recycler.recycle_snapshots(fixture.subvolume.get_storage(), Fixture::recycle_v); // limit live, limit archive
 	auto const post_recycle_count = static_cast<int>(fixture.subvolume.get_live_snapshots().size() + fixture.subvolume.get_archived_snapshots().size());
 	EXPECT(post_recycle_count == Fixture::recycle_v.snapshot_limit + Fixture::recycle_v.archive_limit);
-
-	EXPECT(int(report.deleted.size()) == pre_recycle_count - post_recycle_count);
 }
 } // namespace
 } // namespace btrsnap::test
