@@ -1,8 +1,8 @@
 {
   "packages": [
     {
-      "uri": "karnkaul/confy",
-      "branch": "v0.1.1"
+      "uri": "karnkaul/djson",
+      "branch": "v3.1.5"
     },
     {
       "uri": "karnkaul/klib",

@@ -1,4 +1,5 @@
 #include "btrsnap/instance.hpp"
+#include "btrsnap/util.hpp"
 #include "klib/log/typed.hpp"
 
 namespace btrsnap {
@@ -6,17 +7,31 @@ namespace {
 auto const log = klib::log::Typed<Instance>{};
 } // namespace
 
-auto Instance::load_subvolume(Config config) -> Result<void> {
-	auto result = Subvolume::create(m_btrfs, std::move(config));
+auto Instance::create(StorageInfo storage_info, gsl::not_null<IBtrfs const*> btrfs) -> Result<Instance> {
+	return util::is_non_empty(storage_info.root)
+		.and_then([&] { return util::ensure_directory(storage_info.get_snapshots_path()); })
+		.and_then([&] { return util::ensure_directory(storage_info.get_archive_path()); })
+		.transform([&] { return Instance{btrfs, std::move(storage_info)}; });
+}
+
+Instance::Instance(gsl::not_null<IBtrfs const*> btrfs, StorageInfo storage_info) : m_btrfs(btrfs), m_storage_info(std::move(storage_info)) {}
+
+auto Instance::load_subvolume(SubvolumeInfo subvolume_info) -> Result<void> {
+	auto const name = subvolume_info.name;
+
+	auto result = Subvolume::create(m_btrfs, get_storage_info(), std::move(subvolume_info));
 	if (!result) {
-		log.warn("Failed to load subvolume: {}", result.error().message);
+		log.warn("Failed to load subvolume '{}': {}", name, result.error().message);
 		return std::unexpected{std::move(result.error())};
 	}
 
-	auto const& cfg = result->get_config();
-	log.info("Subvolume loaded: {} ({}, {}, {})", cfg.get_subvolume_path().generic_string(), cfg.snapshot_limit, cfg.archive_period, cfg.archive_limit);
+	log.info("Subvolume '{}' loaded: {}", name, result->get_info().path.generic_string());
 	m_subvolumes.push_back(std::move(*result));
 	return {};
+}
+
+void Instance::load_subvolumes(std::vector<SubvolumeInfo> subvolume_infos) {
+	for (auto& subvolume_info : subvolume_infos) { auto const _ = load_subvolume(std::move(subvolume_info)); }
 }
 
 void Instance::clear_loaded_subvolumes() {

@@ -4,55 +4,67 @@
 
 namespace btrsnap {
 namespace {
-[[nodiscard]] auto get_excess_snapshots(std::vector<Snapshot> sorted, int const keep) -> std::vector<Snapshot> {
-	auto const excess_count = int(sorted.size()) - keep;
-	if (excess_count <= 0) { return {}; }
-
-	// pop snapshots to keep.
-	sorted.resize(std::size_t(excess_count));
-	return sorted;
-}
-
 auto const log = klib::log::Typed<Recycler>{};
 } // namespace
 
-auto Recycler::recycle_snapshots(Config const& config) const -> Report {
-	auto excess = get_excess_live_snapshots(config);
+auto Recycler::recycle_snapshots(Storage const& storage, Info const& info) const -> Report {
+	auto const get_excess_live_snapshots = [&] {
+		return get_excess_snapshots(get_sorted_snapshots_in(storage.get_snapshots_directory()), info.snapshot_limit);
+	};
+
+	auto excess = get_excess_live_snapshots();
 	if (excess.empty()) {
 		log.info("No snapshots to recycle");
 		return {};
 	}
 
 	auto ret = Report{};
-	ret.archived = populate_archive(config, excess);
-	if (!ret.archived.empty()) { excess = get_excess_live_snapshots(config); }
+	ret.archived = populate_archive(storage, excess, info.archive_period);
+	if (!ret.archived.empty()) { excess = get_excess_live_snapshots(); }
 
 	ret.deleted = delete_snapshots(std::move(excess));
 
-	excess = get_excess_archived_snapshots(config);
+	excess = get_excess_snapshots(get_sorted_snapshots_in(storage.get_archive_directory()), info.archive_limit);
 	ret.deleted.append_range(delete_snapshots(std::move(excess)));
 
 	return ret;
 }
 
-auto Recycler::get_live_snapshots(Config const& config) const -> std::vector<Snapshot> { return get_sorted_snapshots_in(config.get_snapshots_path()); }
+auto Recycler::get_snapshot_list(Storage const& storage) const -> SnapshotList {
+	using Entry = SnapshotList::Entry;
 
-auto Recycler::get_archived_snapshots(Config const& config) const -> std::vector<Snapshot> { return get_sorted_snapshots_in(config.get_archive_path()); }
+	auto ret = SnapshotList{};
+	auto const transfer = [&ret](std::span<Snapshot> snapshots, bool const is_archived) {
+		for (auto& snapshot : snapshots) { ret.entries.push_back(Entry{.snapshot = std::move(snapshot), .is_archived = is_archived}); }
+	};
 
-auto Recycler::get_excess_live_snapshots(Config const& config) const -> std::vector<Snapshot> {
-	return get_excess_snapshots(get_live_snapshots(config), config.snapshot_limit);
+	auto snapshots = util::list_snapshots(*m_btrfs, storage.get_snapshots_directory());
+	transfer(snapshots, false);
+	snapshots = util::list_snapshots(*m_btrfs, storage.get_archive_directory());
+	transfer(snapshots, true);
+
+	std::ranges::sort(ret.entries, [](Entry const& a, Entry const& b) { return a.snapshot.timestamp < b.snapshot.timestamp; });
+
+	auto number = 1;
+	for (auto& entry : ret.entries) { entry.number = SnapshotNumber{number++}; }
+
+	return ret;
 }
 
-auto Recycler::get_excess_archived_snapshots(Config const& config) const -> std::vector<Snapshot> {
-	return get_excess_snapshots(get_archived_snapshots(config), config.archive_limit);
+auto Recycler::get_sorted_snapshots_in(fs::path const& path) const -> std::vector<Snapshot> {
+	auto ret = util::list_snapshots(*m_btrfs, path);
+	// move youngest to back.
+	std::ranges::sort(ret, [](Snapshot const& a, Snapshot const& b) { return a.timestamp < b.timestamp; });
+	return ret;
 }
 
-auto Recycler::delete_excess_live_snapshots(Config const& config) const -> std::vector<Result<Snapshot>> {
-	return delete_snapshots(get_excess_live_snapshots(config));
-}
+auto Recycler::get_excess_snapshots(std::vector<Snapshot> sorted, int const keep) -> std::vector<Snapshot> {
+	auto const excess_count = static_cast<int>(sorted.size()) - keep;
+	if (excess_count <= 0) { return {}; }
 
-auto Recycler::delete_excess_archived_snapshots(Config const& config) const -> std::vector<Result<Snapshot>> {
-	return delete_snapshots(get_excess_archived_snapshots(config));
+	// pop snapshots to keep.
+	sorted.resize(std::size_t(excess_count));
+	return sorted;
 }
 
 auto Recycler::delete_snapshots(std::vector<Snapshot> snapshots) const -> std::vector<Result<Snapshot>> {
@@ -71,19 +83,28 @@ auto Recycler::delete_snapshots(std::vector<Snapshot> snapshots) const -> std::v
 	return ret;
 }
 
-auto Recycler::populate_archive(Config const& config, std::span<Snapshot const> excess) const -> std::vector<Snapshot> {
-	auto const archive_path = config.get_archive_path();
-	if (archive_path.empty() || excess.empty()) { return {}; }
+auto Recycler::archive_snapshot(Snapshot const& source, fs::path const& parent_directory) const -> Result<Snapshot> {
+	auto ret = util::copy_snapshot(*m_btrfs, source, parent_directory);
+	if (!ret) {
+		log.warn("Failed to archive snapshot: {}, {}", source.path.generic_string(), ret.error().message);
+	} else {
+		log.info("Snapshot archived: {}", ret->path.generic_string());
+	}
+	return ret;
+}
+
+auto Recycler::populate_archive(Storage const& storage, std::span<Snapshot const> excess, std::chrono::days const period) const -> std::vector<Snapshot> {
+	if (excess.empty()) { return {}; }
 
 	auto latest_timestamp = [&] -> std::optional<Timestamp> {
-		auto const existing = get_archived_snapshots(config);
+		auto const existing = get_sorted_snapshots_in(storage.get_archive_directory());
 		if (!existing.empty()) { return existing.back().timestamp; }
 		return {};
 	}();
 
-	auto err = std::error_code{};
-	if (!fs::exists(archive_path) && !fs::create_directories(archive_path, err)) {
-		log.warn("Failed to create archive directory: {}", archive_path.generic_string());
+	auto result = util::ensure_directory(storage.get_archive_directory());
+	if (!result) {
+		log.warn("Failed to create archive directory: {}", result.error().message);
 		return {};
 	}
 
@@ -93,25 +114,13 @@ auto Recycler::populate_archive(Config const& config, std::span<Snapshot const> 
 			if (latest_timestamp) { return src.timestamp - *latest_timestamp; }
 			return {};
 		}();
-		if (delta_time && *delta_time < config.archive_period) { continue; }
+		if (delta_time && *delta_time < period) { continue; }
 
-		auto dst = archive_path / src.path.filename();
-		fs::rename(src.path, dst, err);
-		if (err != std::error_code{}) {
-			log.warn("Failed to archive snapshot: {}", src.path.generic_string());
-		} else {
-			log.info("Snapshot archived: {}", dst.generic_string());
+		if (auto result = archive_snapshot(src, storage.get_archive_directory())) {
 			latest_timestamp = src.timestamp;
-			ret.push_back(Snapshot{.path = std::move(dst), .timestamp = src.timestamp});
+			ret.push_back(std::move(*result));
 		}
 	}
-	return ret;
-}
-
-auto Recycler::get_sorted_snapshots_in(fs::path const& path) const -> std::vector<Snapshot> {
-	auto ret = util::list_snapshots(*m_btrfs, path);
-	// move youngest to back.
-	std::ranges::sort(ret, [](Snapshot const& a, Snapshot const& b) { return a.timestamp < b.timestamp; });
 	return ret;
 }
 } // namespace btrsnap

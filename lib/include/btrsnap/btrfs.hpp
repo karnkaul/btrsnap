@@ -10,6 +10,7 @@ class IBtrfs : public klib::Polymorphic {
 
 	[[nodiscard]] virtual auto is_subvolume(klib::CString path) const -> Result<void> = 0;
 	[[nodiscard]] virtual auto create_snapshot(klib::CString src, klib::CString dst) const -> Result<void> = 0;
+	[[nodiscard]] virtual auto create_readonly_snapshot(klib::CString src, klib::CString dst) const -> Result<void> = 0;
 	[[nodiscard]] virtual auto create_subvolume(klib::CString path) const -> Result<void> = 0;
 	[[nodiscard]] virtual auto delete_subvolume(klib::CString path) const -> Result<void> = 0;
 };
