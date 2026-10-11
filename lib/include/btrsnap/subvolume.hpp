@@ -4,7 +4,7 @@
 #include "btrsnap/recycle_report.hpp"
 #include "btrsnap/result.hpp"
 #include "btrsnap/snapshot.hpp"
-#include "btrsnap/storage.hpp"
+#include "btrsnap/subvolume_storage.hpp"
 #include <gsl/pointers>
 #include <iosfwd>
 
@@ -12,6 +12,7 @@ namespace btrsnap {
 class Subvolume {
   public:
 	using Config = SubvolumeConfig;
+	using Storage = SubvolumeStorage;
 
 	[[nodiscard]] static auto create(gsl::not_null<IBtrfs const*> btrfs, StorageConfig const& storage_config, Config config) -> Result<Subvolume>;
 

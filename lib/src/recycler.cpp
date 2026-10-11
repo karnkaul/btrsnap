@@ -7,7 +7,7 @@ namespace {
 auto const log = klib::log::Typed<Recycler>{};
 } // namespace
 
-auto Recycler::recycle_snapshots(Storage const& storage, Config const& config) const -> Report {
+auto Recycler::recycle_snapshots(SubvolumeStorage const& storage, Config const& config) const -> Report {
 	auto const get_excess_live_snapshots = [&] {
 		return get_excess_snapshots(get_sorted_snapshots_in(storage.get_snapshots_directory()), config.snapshot_limit);
 	};
@@ -30,7 +30,7 @@ auto Recycler::recycle_snapshots(Storage const& storage, Config const& config) c
 	return ret;
 }
 
-auto Recycler::get_snapshot_list(Storage const& storage) const -> SnapshotList {
+auto Recycler::get_snapshot_list(SubvolumeStorage const& storage) const -> SnapshotList {
 	using Entry = SnapshotList::Entry;
 
 	auto ret = SnapshotList{};
@@ -93,7 +93,8 @@ auto Recycler::archive_snapshot(Snapshot const& source, fs::path const& parent_d
 	return ret;
 }
 
-auto Recycler::populate_archive(Storage const& storage, std::span<Snapshot const> excess, std::chrono::days const period) const -> std::vector<Snapshot> {
+auto Recycler::populate_archive(SubvolumeStorage const& storage, std::span<Snapshot const> excess, std::chrono::days const period) const
+	-> std::vector<Snapshot> {
 	if (excess.empty()) { return {}; }
 
 	auto latest_timestamp = [&] -> std::optional<Timestamp> {
