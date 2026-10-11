@@ -7,9 +7,9 @@ namespace {
 auto const log = klib::log::Typed<Recycler>{};
 } // namespace
 
-auto Recycler::recycle_snapshots(Storage const& storage, Info const& info) const -> Report {
+auto Recycler::recycle_snapshots(Storage const& storage, Config const& config) const -> Report {
 	auto const get_excess_live_snapshots = [&] {
-		return get_excess_snapshots(get_sorted_snapshots_in(storage.get_snapshots_directory()), info.snapshot_limit);
+		return get_excess_snapshots(get_sorted_snapshots_in(storage.get_snapshots_directory()), config.snapshot_limit);
 	};
 
 	auto excess = get_excess_live_snapshots();
@@ -19,12 +19,12 @@ auto Recycler::recycle_snapshots(Storage const& storage, Info const& info) const
 	}
 
 	auto ret = Report{};
-	ret.archived = populate_archive(storage, excess, info.archive_period);
+	ret.archived = populate_archive(storage, excess, config.archive_period);
 	if (!ret.archived.empty()) { excess = get_excess_live_snapshots(); }
 
 	ret.deleted = delete_snapshots(std::move(excess));
 
-	excess = get_excess_snapshots(get_sorted_snapshots_in(storage.get_archive_directory()), info.archive_limit);
+	excess = get_excess_snapshots(get_sorted_snapshots_in(storage.get_archive_directory()), config.archive_limit);
 	ret.deleted.append_range(delete_snapshots(std::move(excess)));
 
 	return ret;

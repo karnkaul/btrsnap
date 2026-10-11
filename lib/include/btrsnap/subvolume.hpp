@@ -1,6 +1,6 @@
 #pragma once
 #include "btrsnap/btrfs.hpp"
-#include "btrsnap/info.hpp"
+#include "btrsnap/config.hpp"
 #include "btrsnap/recycle_report.hpp"
 #include "btrsnap/result.hpp"
 #include "btrsnap/snapshot.hpp"
@@ -11,11 +11,12 @@
 namespace btrsnap {
 class Subvolume {
   public:
-	using Info = SubvolumeInfo;
+	using Config = SubvolumeConfig;
 
-	[[nodiscard]] static auto create(gsl::not_null<IBtrfs const*> btrfs, StorageInfo const& storage_info, Info info) -> Result<Subvolume>;
+	[[nodiscard]] static auto create(gsl::not_null<IBtrfs const*> btrfs, StorageConfig const& storage_config, Config config) -> Result<Subvolume>;
 
-	[[nodiscard]] auto get_info() const -> Info const& { return m_info; }
+	[[nodiscard]] auto get_btrfs() const -> IBtrfs const& { return *m_btrfs; }
+	[[nodiscard]] auto get_config() const -> Config const& { return m_config; }
 	[[nodiscard]] auto get_storage() const -> Storage const& { return m_storage; }
 
 	[[nodiscard]] auto get_live_snapshots() const -> std::vector<Snapshot>;
@@ -28,10 +29,10 @@ class Subvolume {
 	void print_snapshots(std::ostream& out, Timestamp now = current_timestamp()) const;
 
   private:
-	explicit Subvolume(gsl::not_null<IBtrfs const*> btrfs, Storage storage, Info info);
+	explicit Subvolume(gsl::not_null<IBtrfs const*> btrfs, Storage storage, Config config);
 
 	gsl::not_null<IBtrfs const*> m_btrfs;
 	Storage m_storage;
-	Info m_info;
+	Config m_config;
 };
 } // namespace btrsnap

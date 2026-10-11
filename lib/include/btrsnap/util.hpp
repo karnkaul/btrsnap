@@ -1,6 +1,6 @@
 #pragma once
 #include "btrsnap/btrfs.hpp"
-#include "btrsnap/info.hpp"
+#include "btrsnap/config.hpp"
 #include "btrsnap/snapshot.hpp"
 #include <optional>
 #include <vector>
@@ -19,8 +19,8 @@ namespace btrsnap::util {
 [[nodiscard]] auto is_directory(fs::path const& path) -> Result<void>;
 [[nodiscard]] auto ensure_directory(fs::path const& path) -> Result<void>;
 
-void from_json(dj::Json const& json, StorageInfo& out);
-void from_json(dj::Json const& json, RecycleInfo& out);
-void from_json(dj::Json const& json, SubvolumeInfo& out);
-void from_json(dj::Json const& json, InstanceInfo& out);
+void from_json(dj::Json const& json, StorageConfig& out);
+void from_json(dj::Json const& json, RecycleConfig& out);
+void from_json(dj::Json const& json, SubvolumeConfig& out);
+void from_json(dj::Json const& json, InstanceConfig& out);
 } // namespace btrsnap::util

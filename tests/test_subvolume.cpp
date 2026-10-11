@@ -11,8 +11,8 @@ constexpr std::string_view subvolume_subpath_v{"subvol"};
 TEST_CASE(subvolume_create_with_existing_snapshots_dir) {
 	auto const environment = Environment{};
 
-	auto const info = environment.create_subvolume_info(subvolume_subpath_v);
-	ASSERT(environment.get_btrfs().create_subvolume(info.path.generic_string()));
+	auto const config = environment.create_subvolume_config(subvolume_subpath_v);
+	ASSERT(environment.get_btrfs().create_subvolume(config.path.generic_string()));
 
 	auto subvolume = environment.create_subvolume(subvolume_subpath_v);
 }

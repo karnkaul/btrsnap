@@ -81,21 +81,21 @@ auto util::ensure_directory(fs::path const& path) -> Result<void> {
 	return util::is_directory(path);
 }
 
-void util::from_json(dj::Json const& json, StorageInfo& out) { to_path(json, out.root); }
+void util::from_json(dj::Json const& json, StorageConfig& out) { to_path(json, out.root); }
 
-void util::from_json(dj::Json const& json, RecycleInfo& out) {
+void util::from_json(dj::Json const& json, RecycleConfig& out) {
 	if (auto const& snapshot_limit = json["snapshot_limit"]) { from_json(snapshot_limit, out.snapshot_limit); }
 	if (auto const& archive_period_days = json["archive_period_days"]) { to_days(archive_period_days, out.archive_period); }
 	if (auto const& archive_limit = json["archive_limit"]) { from_json(archive_limit, out.archive_limit); }
 }
 
-void util::from_json(dj::Json const& json, SubvolumeInfo& out) {
+void util::from_json(dj::Json const& json, SubvolumeConfig& out) {
 	from_json(json["name"], out.name);
 	to_path(json["path"], out.path);
 	from_json(json["recycle"], out.recycle);
 }
 
-void util::from_json(dj::Json const& json, InstanceInfo& out) {
+void util::from_json(dj::Json const& json, InstanceConfig& out) {
 	if (auto const& storage = json["storage"]) { from_json(storage, out.storage); }
 	for (auto const& subvolume : json["subvolumes"].as_array()) { from_json(subvolume, out.subvolumes.emplace_back()); }
 }

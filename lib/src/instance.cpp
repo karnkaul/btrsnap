@@ -7,31 +7,31 @@ namespace {
 auto const log = klib::log::Typed<Instance>{};
 } // namespace
 
-auto Instance::create(StorageInfo storage_info, gsl::not_null<IBtrfs const*> btrfs) -> Result<Instance> {
-	return util::is_non_empty(storage_info.root)
-		.and_then([&] { return util::ensure_directory(storage_info.get_snapshots_path()); })
-		.and_then([&] { return util::ensure_directory(storage_info.get_archive_path()); })
-		.transform([&] { return Instance{btrfs, std::move(storage_info)}; });
+auto Instance::create(StorageConfig storage_config, gsl::not_null<IBtrfs const*> btrfs) -> Result<Instance> {
+	return util::is_non_empty(storage_config.root)
+		.and_then([&] { return util::ensure_directory(storage_config.get_snapshots_path()); })
+		.and_then([&] { return util::ensure_directory(storage_config.get_archive_path()); })
+		.transform([&] { return Instance{btrfs, std::move(storage_config)}; });
 }
 
-Instance::Instance(gsl::not_null<IBtrfs const*> btrfs, StorageInfo storage_info) : m_btrfs(btrfs), m_storage_info(std::move(storage_info)) {}
+Instance::Instance(gsl::not_null<IBtrfs const*> btrfs, StorageConfig storage_config) : m_btrfs(btrfs), m_storage_config(std::move(storage_config)) {}
 
-auto Instance::load_subvolume(SubvolumeInfo subvolume_info) -> Result<void> {
-	auto const name = subvolume_info.name;
+auto Instance::load_subvolume(SubvolumeConfig subvolume_config) -> Result<void> {
+	auto const name = subvolume_config.name;
 
-	auto result = Subvolume::create(m_btrfs, get_storage_info(), std::move(subvolume_info));
+	auto result = Subvolume::create(m_btrfs, get_storage_config(), std::move(subvolume_config));
 	if (!result) {
 		log.warn("Failed to load subvolume '{}': {}", name, result.error().message);
 		return std::unexpected{std::move(result.error())};
 	}
 
-	log.info("Subvolume '{}' loaded: {}", name, result->get_info().path.generic_string());
+	log.info("Subvolume '{}' loaded: {}", name, result->get_config().path.generic_string());
 	m_subvolumes.push_back(std::move(*result));
 	return {};
 }
 
-void Instance::load_subvolumes(std::vector<SubvolumeInfo> subvolume_infos) {
-	for (auto& subvolume_info : subvolume_infos) { auto const _ = load_subvolume(std::move(subvolume_info)); }
+void Instance::load_subvolumes(std::vector<SubvolumeConfig> subvolume_configs) {
+	for (auto& subvolume_config : subvolume_configs) { auto const _ = load_subvolume(std::move(subvolume_config)); }
 }
 
 void Instance::clear_loaded_subvolumes() {

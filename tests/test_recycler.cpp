@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 struct Fixture {
 	static constexpr std::string_view subvolume_subpath_v{"subvol"};
 	static constexpr std::string_view subvolume_name_v{"@subvol"};
-	static constexpr auto recycle_v = RecycleInfo{.snapshot_limit = 2, .archive_limit = 2, .archive_period = std::chrono::days{1}};
+	static constexpr auto recycle_v = RecycleConfig{.snapshot_limit = 2, .archive_limit = 2, .archive_period = std::chrono::days{1}};
 
 	Environment environment{};
 	Recycler recycler{&environment.get_btrfs()};

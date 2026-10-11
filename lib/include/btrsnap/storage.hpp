@@ -1,11 +1,13 @@
 #pragma once
-#include "btrsnap/info.hpp"
+#include "btrsnap/config.hpp"
 #include "btrsnap/result.hpp"
 
 namespace btrsnap {
 class Storage {
   public:
-	[[nodiscard]] static auto create(StorageInfo const& storage_info, std::string_view subvolume_name) -> Result<Storage>;
+	using Config = StorageConfig;
+
+	[[nodiscard]] static auto create(Config const& config, std::string_view subvolume_name) -> Result<Storage>;
 
 	[[nodiscard]] auto get_snapshots_directory() const -> fs::path const& { return m_snapshots_directory; }
 	[[nodiscard]] auto get_archive_directory() const -> fs::path const& { return m_archive_directory; }

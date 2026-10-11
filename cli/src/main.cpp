@@ -21,7 +21,7 @@ class App {
 		if (parse_result.should_early_exit()) { return parse_result.return_code(); }
 
 		if (!load_config()) { return EXIT_FAILURE; }
-		KLIB_ASSERT(!m_instance_info.subvolumes.empty());
+		KLIB_ASSERT(!m_instance_config.subvolumes.empty());
 
 		if (!setup_instance()) { return EXIT_FAILURE; }
 		KLIB_ASSERT(!m_instance->get_loaded_subvolumes().empty());
@@ -63,8 +63,8 @@ class App {
 			return false;
 		}
 
-		util::from_json(*json, m_instance_info);
-		if (m_instance_info.subvolumes.empty()) {
+		util::from_json(*json, m_instance_config);
+		if (m_instance_config.subvolumes.empty()) {
 			std::println(stderr, "No subvolumes found in: {}", config_path);
 			return false;
 		}
@@ -73,14 +73,14 @@ class App {
 	}
 
 	[[nodiscard]] auto setup_instance() -> bool {
-		auto instance = Instance::create(m_instance_info.storage);
+		auto instance = Instance::create(m_instance_config.storage);
 		if (!instance) {
 			std::println("Failed to create Instance: {}", instance.error().message);
 			return false;
 		}
 
 		m_instance.emplace(std::move(*instance));
-		m_instance->load_subvolumes(std::move(m_instance_info.subvolumes));
+		m_instance->load_subvolumes(std::move(m_instance_config.subvolumes));
 		if (!m_instance->get_loaded_subvolumes().empty()) { return true; }
 
 		std::println(stderr, "No valid subvolumes in loaded configs");
@@ -120,7 +120,7 @@ class App {
 
 	Params m_params{};
 
-	InstanceInfo m_instance_info{};
+	InstanceConfig m_instance_config{};
 	std::optional<Instance> m_instance{};
 };
 } // namespace

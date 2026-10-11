@@ -1,6 +1,6 @@
 #pragma once
 #include "btrsnap/btrfs.hpp"
-#include "btrsnap/info.hpp"
+#include "btrsnap/config.hpp"
 #include "btrsnap/recycle_report.hpp"
 #include "btrsnap/storage.hpp"
 #include <gsl/pointers>
@@ -8,12 +8,12 @@
 namespace btrsnap {
 class Recycler {
   public:
-	using Info = RecycleInfo;
+	using Config = RecycleConfig;
 	using Report = RecycleReport;
 
 	explicit Recycler(gsl::not_null<IBtrfs const*> btrfs) : m_btrfs(btrfs) {}
 
-	[[nodiscard]] auto recycle_snapshots(Storage const& storage, Info const& info) const -> Report;
+	[[nodiscard]] auto recycle_snapshots(Storage const& storage, Config const& config) const -> Report;
 
 	[[nodiscard]] auto get_snapshot_list(Storage const& storage) const -> SnapshotList;
 
