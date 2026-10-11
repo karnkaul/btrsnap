@@ -2,7 +2,6 @@
 #include "btrsnap/instance.hpp"
 #include "btrsnap/util.hpp"
 #include "clap/parser.hpp"
-#include "djson/json.hpp"
 #include "klib/debug/assert.hpp"
 #include <iostream>
 #include <optional>
@@ -54,21 +53,13 @@ class App {
 	}
 
 	[[nodiscard]] auto load_config() -> bool {
-		auto config_path = std::string_view{m_params.custom_config_path};
-		if (config_path.empty()) { config_path = "/etc/btrsnap.jsonc"; }
-
-		auto json = dj::Json::from_file(config_path);
-		if (!json) {
-			std::println(stderr, "Failed to load config from: {}", config_path);
+		auto result = util::load_config(m_params.custom_config_path);
+		if (!result) {
+			std::println(stderr, "Failed to load config: {}", result.error().message);
 			return false;
 		}
 
-		util::from_json(*json, m_instance_config);
-		if (m_instance_config.subvolumes.empty()) {
-			std::println(stderr, "No subvolumes found in: {}", config_path);
-			return false;
-		}
-
+		m_instance_config = std::move(*result);
 		return true;
 	}
 

@@ -23,4 +23,6 @@ void from_json(dj::Json const& json, StorageConfig& out);
 void from_json(dj::Json const& json, RecycleConfig& out);
 void from_json(dj::Json const& json, SubvolumeConfig& out);
 void from_json(dj::Json const& json, InstanceConfig& out);
+
+[[nodiscard]] auto load_config(std::string& path) -> Result<InstanceConfig>;
 } // namespace btrsnap::util
