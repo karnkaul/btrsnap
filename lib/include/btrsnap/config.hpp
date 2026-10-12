@@ -31,6 +31,7 @@ struct SubvolumeConfig {
 };
 
 struct InstanceConfig {
+	fs::path source{};
 	StorageConfig storage{};
 	std::vector<SubvolumeConfig> subvolumes{};
 };

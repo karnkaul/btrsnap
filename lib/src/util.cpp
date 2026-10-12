@@ -83,7 +83,7 @@ auto util::ensure_directory(fs::path const& path) -> Result<void> {
 
 void util::from_json(dj::Json const& json, StorageConfig& out) { to_path(json, out.root); }
 
-auto util::load_config(std::string& path) -> Result<InstanceConfig> {
+auto util::load_config(std::string_view path) -> Result<InstanceConfig> {
 	if (path.empty()) { path = "/etc/btrsnap.jsonc"; }
 
 	auto json = dj::Json::from_file(path);
@@ -92,6 +92,8 @@ auto util::load_config(std::string& path) -> Result<InstanceConfig> {
 	auto ret = InstanceConfig{};
 	from_json(*json, ret);
 	if (ret.subvolumes.empty()) { return detail::to_error(Error::Type::InvalidArgument, std::format("No subvolumes found in: {}", path)); }
+
+	ret.source = fs::absolute(path);
 
 	return ret;
 }

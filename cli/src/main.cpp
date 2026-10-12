@@ -101,7 +101,7 @@ class App {
 	}
 
 	struct Params {
-		std::string custom_config_path{};
+		std::string_view custom_config_path{};
 		bool generate{};
 		bool list{};
 		bool no_recycle{};
