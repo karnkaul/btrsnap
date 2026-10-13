@@ -20,6 +20,7 @@ class Subvolume {
 	[[nodiscard]] auto get_config() const -> Config const& { return m_config; }
 	[[nodiscard]] auto get_storage() const -> Storage const& { return m_storage; }
 
+	[[nodiscard]] auto get_snapshot_list() const -> SnapshotList;
 	[[nodiscard]] auto get_live_snapshots() const -> std::vector<Snapshot>;
 	[[nodiscard]] auto get_archived_snapshots() const -> std::vector<Snapshot>;
 

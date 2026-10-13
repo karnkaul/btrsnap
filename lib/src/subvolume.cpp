@@ -64,6 +64,8 @@ auto Subvolume::create(gsl::not_null<IBtrfs const*> btrfs, StorageConfig const& 
 Subvolume::Subvolume(gsl::not_null<IBtrfs const*> btrfs, Storage storage, Config config)
 	: m_btrfs(btrfs), m_storage(std::move(storage)), m_config(std::move(config)) {}
 
+auto Subvolume::get_snapshot_list() const -> SnapshotList { return Recycler{m_btrfs}.get_snapshot_list(get_storage()); }
+
 auto Subvolume::get_live_snapshots() const -> std::vector<Snapshot> {
 	return Recycler{m_btrfs}.get_sorted_snapshots_in(get_storage().get_snapshots_directory());
 }
