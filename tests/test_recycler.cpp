@@ -4,8 +4,6 @@
 
 namespace btrsnap::test {
 namespace {
-using namespace std::chrono_literals;
-
 struct Fixture {
 	static constexpr std::string_view subvolume_subpath_v{"subvol"};
 	static constexpr std::string_view subvolume_name_v{"@subvol"};

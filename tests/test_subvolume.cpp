@@ -4,8 +4,6 @@
 
 namespace btrsnap::test {
 namespace {
-using namespace std::chrono_literals;
-
 constexpr std::string_view subvolume_subpath_v{"subvol"};
 
 TEST_CASE(subvolume_create_with_existing_snapshots_dir) {

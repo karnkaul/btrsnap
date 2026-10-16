@@ -9,6 +9,8 @@ using Clock = std::chrono::system_clock;
 using Seconds = std::chrono::seconds;
 using Timestamp = std::chrono::seconds;
 
+using namespace std::chrono_literals;
+
 [[nodiscard]] auto to_timestamp(klib::CString serialized) -> std::optional<Timestamp>;
 [[nodiscard]] auto current_timestamp() -> Timestamp;
 [[nodiscard]] auto to_pathname(Timestamp timestamp) -> std::string;

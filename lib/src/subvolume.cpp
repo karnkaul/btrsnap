@@ -10,8 +10,6 @@
 
 namespace btrsnap {
 namespace {
-using namespace std::chrono_literals;
-
 constexpr void clamp_limit(int& out) { out = std::max(out, 0); }
 constexpr void clamp_period(std::chrono::days& out) { out = std::max(std::chrono::days{1}, out); }
 

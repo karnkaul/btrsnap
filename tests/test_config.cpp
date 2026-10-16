@@ -4,8 +4,6 @@
 
 namespace btrsnap::test {
 namespace {
-using namespace std::chrono_literals;
-
 TEST_CASE(instance_config_parse) {
 	static constexpr std::string_view json_v = R"({
 	"storage": "/root",
