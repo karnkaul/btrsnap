@@ -22,8 +22,8 @@ class App {
 		if (!load_config()) { return EXIT_FAILURE; }
 		KLIB_ASSERT(!m_instance_config.subvolumes.empty());
 
-		if (!setup_instance()) { return EXIT_FAILURE; }
-		KLIB_ASSERT(!m_instance->get_loaded_subvolumes().empty());
+		if (!setup_instance() || !load_subvolumes()) { return EXIT_FAILURE; }
+		KLIB_ASSERT(!m_subvolume_list.subvolumes.empty());
 
 		if (m_params.list) { return print_snapshots(); }
 		if (m_params.clear) { return clear_snapshots(); }
@@ -71,31 +71,35 @@ class App {
 		}
 
 		m_instance.emplace(std::move(*instance));
-		m_instance->load_subvolumes(std::move(m_instance_config.subvolumes));
-		if (!m_instance->get_loaded_subvolumes().empty()) { return true; }
+		return true;
+	}
+
+	[[nodiscard]] auto load_subvolumes() -> bool {
+		m_subvolume_list = m_instance->load_subvolume_list(std::move(m_instance_config.subvolumes));
+		if (!m_subvolume_list.subvolumes.empty()) { return true; }
 
 		std::println(stderr, "No valid subvolumes in loaded configs");
 		return false;
 	}
 
 	[[nodiscard]] auto print_snapshots() const -> int {
-		m_instance->print_snapshots(std::cout);
+		m_subvolume_list.print_snapshots(std::cout);
 		return EXIT_SUCCESS;
 	}
 
 	[[nodiscard]] auto clear_snapshots() -> int {
-		auto const results = m_instance->clear_all_snapshots();
+		auto const results = m_subvolume_list.clear_all_snapshots();
 		if (results.empty() || all_success(results)) { return EXIT_SUCCESS; }
 		return EXIT_FAILURE;
 	}
 
 	[[nodiscard]] auto take_snapshots() -> int {
 		if (!m_params.only_recycle) {
-			auto const results = m_instance->take_snapshots();
+			auto const results = m_subvolume_list.take_snapshots();
 			if (results.empty() || !all_success(results)) { return EXIT_FAILURE; }
 		}
 
-		if (!m_params.no_recycle) { m_instance->recycle_snapshots(); }
+		if (!m_params.no_recycle) { m_subvolume_list.recycle_snapshots(); }
 
 		return EXIT_SUCCESS;
 	}
@@ -113,6 +117,7 @@ class App {
 
 	InstanceConfig m_instance_config{};
 	std::optional<Instance> m_instance{};
+	Subvolume::List m_subvolume_list{};
 };
 } // namespace
 } // namespace btrsnap::cli

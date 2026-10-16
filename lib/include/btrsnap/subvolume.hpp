@@ -42,7 +42,7 @@ class Subvolume {
 
 class Subvolume::List {
   public:
-	auto take_snapshots(Timestamp timestamp = current_timestamp()) -> std::vector<Result<Snapshot>>;
+	[[nodiscard]] auto take_snapshots(Timestamp timestamp = current_timestamp()) -> std::vector<Result<Snapshot>>;
 	auto recycle_snapshots() -> RecycleReport;
 	auto clear_all_snapshots() -> std::vector<Result<Snapshot>>;
 	void print_snapshots(std::ostream& out, Timestamp now = current_timestamp()) const;
