@@ -14,7 +14,7 @@ constexpr void clamp_limit(int& out) { out = std::max(out, 0); }
 constexpr void clamp_period(std::chrono::days& out) { out = std::max(std::chrono::days{1}, out); }
 
 struct Printer {
-	void print(SnapshotList const& list) const {
+	void print(Snapshot::List const& list) const {
 		auto table = klib::TextTable::Builder{}.add_column(" #").add_column(std::string{subvolume}).add_column("Age").build();
 
 		for (auto const [index, entry] : std::views::enumerate(list.entries)) {
@@ -62,7 +62,7 @@ auto Subvolume::create(gsl::not_null<IBtrfs const*> btrfs, StorageConfig const& 
 Subvolume::Subvolume(gsl::not_null<IBtrfs const*> btrfs, Storage storage, Config config)
 	: m_btrfs(btrfs), m_storage(std::move(storage)), m_config(std::move(config)) {}
 
-auto Subvolume::get_snapshot_list() const -> SnapshotList { return Recycler{m_btrfs}.get_snapshot_list(get_storage()); }
+auto Subvolume::get_snapshot_list() const -> Snapshot::List { return Recycler{m_btrfs}.get_snapshot_list(get_storage()); }
 
 auto Subvolume::get_live_snapshots() const -> std::vector<Snapshot> {
 	return Recycler{m_btrfs}.get_sorted_snapshots_in(get_storage().get_snapshots_directory());
@@ -92,5 +92,27 @@ auto Subvolume::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
 void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
 	auto const printer = Printer{.out = out, .subvolume = m_config.name, .recycle = m_config.recycle, .now = now};
 	printer.print(Recycler{m_btrfs}.get_snapshot_list(m_storage));
+}
+
+auto Subvolume::List::take_snapshots(Timestamp const timestamp) -> std::vector<Result<Snapshot>> {
+	auto ret = std::vector<Result<Snapshot>>{};
+	for (auto& subvolume : subvolumes) { ret.push_back(subvolume.take_snapshot(timestamp)); }
+	return ret;
+}
+
+auto Subvolume::List::recycle_snapshots() -> RecycleReport {
+	auto ret = RecycleReport{};
+	for (auto& subvolume : subvolumes) { ret.append(subvolume.recycle_snapshots()); }
+	return ret;
+}
+
+auto Subvolume::List::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
+	auto ret = std::vector<Result<Snapshot>>{};
+	for (auto& subvolume : subvolumes) { ret.append_range(subvolume.clear_all_snapshots()); }
+	return ret;
+}
+
+void Subvolume::List::print_snapshots(std::ostream& out, Timestamp const now) const {
+	for (auto const& subvolume : subvolumes) { subvolume.print_snapshots(out, now); }
 }
 } // namespace btrsnap

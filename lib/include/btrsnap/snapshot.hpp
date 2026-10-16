@@ -7,13 +7,15 @@ namespace btrsnap {
 namespace fs = std::filesystem;
 
 struct Snapshot {
+	struct List;
+
 	fs::path path{};
 	Timestamp timestamp{};
 };
 
 enum struct SnapshotNumber : int {};
 
-struct SnapshotList {
+struct Snapshot::List {
 	using Number = SnapshotNumber;
 
 	struct Entry {

@@ -30,10 +30,10 @@ auto Recycler::recycle_snapshots(SubvolumeStorage const& storage, Config const& 
 	return ret;
 }
 
-auto Recycler::get_snapshot_list(SubvolumeStorage const& storage) const -> SnapshotList {
-	using Entry = SnapshotList::Entry;
+auto Recycler::get_snapshot_list(SubvolumeStorage const& storage) const -> Snapshot::List {
+	using Entry = Snapshot::List::Entry;
 
-	auto ret = SnapshotList{};
+	auto ret = Snapshot::List{};
 	auto const transfer = [&ret](std::span<Snapshot> snapshots, bool const is_archived) {
 		for (auto& snapshot : snapshots) { ret.entries.push_back(Entry{.snapshot = std::move(snapshot), .is_archived = is_archived}); }
 	};
