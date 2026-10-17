@@ -9,12 +9,12 @@ enum class ErrorType : std::int8_t {
 	InvalidArgument,
 	Filesystem,
 	Btrfs,
-	Async,
 };
 inline auto const error_type_name_map = klib::EnumNameMap<ErrorType>{
-	{ErrorType::Unknown, "UnknownError"},  {ErrorType::InvalidArgument, "InvalidArgument"},
-	{ErrorType::Filesystem, "Filesystem"}, {ErrorType::Btrfs, "BtrfsError"},
-	{ErrorType::Async, "AsyncError"},
+	{ErrorType::Unknown, "UnknownError"},
+	{ErrorType::InvalidArgument, "InvalidArgument"},
+	{ErrorType::Filesystem, "Filesystem"},
+	{ErrorType::Btrfs, "BtrfsError"},
 };
 
 struct Error {
