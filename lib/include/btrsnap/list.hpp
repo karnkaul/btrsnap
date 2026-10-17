@@ -18,6 +18,8 @@ class SnapshotList {
 	[[nodiscard]] auto find_entry(Number number) const -> klib::Ptr<Entry const>;
 	[[nodiscard]] auto find_snapshot(Number number) const -> klib::Ptr<Snapshot const>;
 
+	auto delete_snapshot(Number number) -> Result<Snapshot>;
+
   private:
 	gsl::not_null<IBtrfs const*> m_btrfs;
 	std::vector<Entry> m_entries{};
@@ -29,6 +31,9 @@ class SubvolumeList {
 	auto recycle_snapshots() -> RecycleReport;
 	auto clear_all_snapshots() -> std::vector<Result<Snapshot>>;
 	void print_snapshots(std::ostream& out, Timestamp now = current_timestamp()) const;
+
+	[[nodiscard]] auto find_by_name(std::string_view name) const -> klib::Ptr<Subvolume const>;
+	[[nodiscard]] auto find_by_path(fs::path const& path) const -> klib::Ptr<Subvolume const>;
 
 	std::vector<Subvolume> subvolumes{};
 };

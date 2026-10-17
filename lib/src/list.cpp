@@ -1,5 +1,6 @@
 #include "btrsnap/list.hpp"
 #include "btrsnap/util.hpp"
+#include "detail/to_error.hpp"
 
 namespace btrsnap {
 SnapshotList::SnapshotList(Subvolume const& subvolume) : m_btrfs(&subvolume.get_btrfs()) {
@@ -31,6 +32,20 @@ auto SnapshotList::find_snapshot(Number const number) const -> klib::Ptr<Snapsho
 	return &entry->snapshot;
 }
 
+auto SnapshotList::delete_snapshot(Number const number) -> Result<Snapshot> {
+	auto const it = std::ranges::find_if(m_entries, [number](Entry const& e) { return e.number == number; });
+	if (it == m_entries.end()) {
+		return detail::to_error(Error::Type::InvalidArgument, std::format("Invalid Snapshot Number: {}", std::to_underlying(number)));
+	}
+
+	auto result = m_btrfs->delete_subvolume(it->snapshot.path.generic_string());
+	if (!result) { return std::unexpected(std::move(result.error())); }
+
+	auto ret = std::move(it->snapshot);
+	m_entries.erase(it);
+	return ret;
+}
+
 auto SubvolumeList::take_snapshots(Timestamp const timestamp) -> std::vector<Result<Snapshot>> {
 	auto ret = std::vector<Result<Snapshot>>{};
 	for (auto& subvolume : subvolumes) { ret.push_back(subvolume.take_snapshot(timestamp)); }
@@ -51,5 +66,17 @@ auto SubvolumeList::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
 
 void SubvolumeList::print_snapshots(std::ostream& out, Timestamp const now) const {
 	for (auto const& subvolume : subvolumes) { subvolume.print_snapshots(out, now); }
+}
+
+auto SubvolumeList::find_by_name(std::string_view const name) const -> klib::Ptr<Subvolume const> {
+	auto const it = std::ranges::find_if(subvolumes, [name](Subvolume const& subvolume) { return subvolume.get_config().name == name; });
+	if (it == subvolumes.end()) { return nullptr; }
+	return &*it;
+}
+
+auto SubvolumeList::find_by_path(fs::path const& path) const -> klib::Ptr<Subvolume const> {
+	auto const it = std::ranges::find_if(subvolumes, [&path](Subvolume const& subvolume) { return subvolume.get_config().path == path; });
+	if (it == subvolumes.end()) { return nullptr; }
+	return &*it;
 }
 } // namespace btrsnap

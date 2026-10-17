@@ -25,6 +25,8 @@ class App {
 		if (!setup_instance() || !load_subvolumes()) { return EXIT_FAILURE; }
 		KLIB_ASSERT(!m_subvolume_list.subvolumes.empty());
 
+		if (parse_result.command_identifier() == "delete") { return delete_snapshot(); }
+
 		if (m_params.list) { return print_snapshots(); }
 		if (m_params.clear) { return clear_snapshots(); }
 		return take_snapshots();
@@ -33,8 +35,12 @@ class App {
   private:
 	[[nodiscard]] auto parse_args(int const argc, char const* const* argv) -> clap::Result {
 		static auto const version_str = std::format("{}", build_version_v);
-		auto spec = clap::spec::Parameters{
-			.parameters =
+		auto delete_params = clap::ParameterList{
+			clap::positional_required(m_delete_params.subvolume_name, "SUBVOLUME_NAME", "subvolume to delete snapshot for"),
+			clap::positional_required(m_delete_params.snapshot_number, "SNAPSHOT_NUMBER", "snapshot number to delete (use --list to enumerate)"),
+		};
+		auto spec = clap::spec::Commands{
+			.options =
 				{
 					clap::named_option(m_params.custom_config_path, "c,config", "path to custom config"),
 					clap::named_flag(m_params.list, "l,list", "list snapshots"),
@@ -42,6 +48,11 @@ class App {
 					clap::named_flag(m_params.only_recycle, "r,recycle", "only recycle existing snapshots"),
 					clap::named_flag(m_params.clear, "clear", "clear ALL saved snapshots"),
 				},
+			.commands =
+				{
+					clap::command("delete", std::move(delete_params), "delete a subvolume snapshot"),
+				},
+			.policy = clap::CommandPolicy::Optional,
 			.program =
 				clap::Program{
 					.name = "btrsnap",
@@ -104,6 +115,24 @@ class App {
 		return EXIT_SUCCESS;
 	}
 
+	[[nodiscard]] auto delete_snapshot() -> int {
+		auto const subvolume = m_subvolume_list.find_by_name(m_delete_params.subvolume_name);
+		if (!subvolume) {
+			std::println(stderr, "Invalid subvolume name: {}", m_delete_params.subvolume_name);
+			return EXIT_FAILURE;
+		}
+
+		auto snapshot_list = SnapshotList{*subvolume};
+		auto const result = snapshot_list.delete_snapshot(SnapshotNumber{m_delete_params.snapshot_number});
+		if (!result) {
+			std::println(stderr, "{}", result.error().message);
+			return EXIT_FAILURE;
+		}
+
+		std::println("Snapshot deleted: {}", result->path.generic_string());
+		return EXIT_SUCCESS;
+	}
+
 	struct Params {
 		std::string_view custom_config_path{};
 		bool generate{};
@@ -113,7 +142,13 @@ class App {
 		bool clear{};
 	};
 
+	struct DeleteParams {
+		std::string_view subvolume_name{};
+		int snapshot_number{};
+	};
+
 	Params m_params{};
+	DeleteParams m_delete_params{};
 
 	InstanceConfig m_instance_config{};
 	std::optional<Instance> m_instance{};
