@@ -23,7 +23,6 @@ class Subvolume {
 	[[nodiscard]] auto get_config() const -> Config const& { return m_config; }
 	[[nodiscard]] auto get_storage() const -> Storage const& { return m_storage; }
 
-	[[nodiscard]] auto get_snapshot_list() const -> Snapshot::List;
 	[[nodiscard]] auto get_live_snapshots() const -> std::vector<Snapshot>;
 	[[nodiscard]] auto get_archived_snapshots() const -> std::vector<Snapshot>;
 
@@ -40,15 +39,5 @@ class Subvolume {
 	gsl::not_null<IBtrfs const*> m_btrfs;
 	Storage m_storage;
 	Config m_config;
-};
-
-class Subvolume::List {
-  public:
-	[[nodiscard]] auto take_snapshots(Timestamp timestamp = current_timestamp()) -> std::vector<Result<Snapshot>>;
-	auto recycle_snapshots() -> RecycleReport;
-	auto clear_all_snapshots() -> std::vector<Result<Snapshot>>;
-	void print_snapshots(std::ostream& out, Timestamp now = current_timestamp()) const;
-
-	std::vector<Subvolume> subvolumes{};
 };
 } // namespace btrsnap

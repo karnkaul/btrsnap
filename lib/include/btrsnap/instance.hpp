@@ -1,5 +1,6 @@
 #pragma once
 #include "btrsnap/config.hpp"
+#include "btrsnap/list.hpp"
 #include "btrsnap/subvolume.hpp"
 
 namespace btrsnap {
@@ -11,7 +12,7 @@ class Instance {
 	[[nodiscard]] auto get_storage_config() const -> StorageConfig const& { return m_storage_config; }
 
 	[[nodiscard]] auto load_subvolume(SubvolumeConfig subvolume_config) const -> Result<Subvolume>;
-	[[nodiscard]] auto load_subvolume_list(std::vector<SubvolumeConfig> subvolume_config) const -> Subvolume::List;
+	[[nodiscard]] auto load_subvolume_list(std::vector<SubvolumeConfig> subvolume_config) const -> SubvolumeList;
 
   private:
 	explicit Instance(gsl::not_null<IBtrfs const*> btrfs, StorageConfig storage_config);

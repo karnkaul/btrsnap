@@ -117,7 +117,7 @@ class App {
 
 	InstanceConfig m_instance_config{};
 	std::optional<Instance> m_instance{};
-	Subvolume::List m_subvolume_list{};
+	SubvolumeList m_subvolume_list{};
 };
 } // namespace
 } // namespace btrsnap::cli

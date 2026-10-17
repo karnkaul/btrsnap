@@ -28,8 +28,8 @@ auto Instance::load_subvolume(SubvolumeConfig subvolume_config) const -> Result<
 	return result;
 }
 
-auto Instance::load_subvolume_list(std::vector<SubvolumeConfig> subvolume_configs) const -> Subvolume::List {
-	auto ret = Subvolume::List{};
+auto Instance::load_subvolume_list(std::vector<SubvolumeConfig> subvolume_configs) const -> SubvolumeList {
+	auto ret = SubvolumeList{};
 	for (auto& subvolume_config : subvolume_configs) {
 		auto subvolume = load_subvolume(std::move(subvolume_config));
 		if (!subvolume) { continue; }

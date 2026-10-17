@@ -30,27 +30,6 @@ auto Recycler::recycle_snapshots(SubvolumeStorage const& storage, Config const& 
 	return ret;
 }
 
-auto Recycler::get_snapshot_list(SubvolumeStorage const& storage) const -> Snapshot::List {
-	using Entry = Snapshot::List::Entry;
-
-	auto ret = Snapshot::List{};
-	auto const transfer = [&ret](std::span<Snapshot> snapshots, bool const is_archived) {
-		for (auto& snapshot : snapshots) { ret.entries.push_back(Entry{.snapshot = std::move(snapshot), .is_archived = is_archived}); }
-	};
-
-	auto snapshots = util::list_snapshots(*m_btrfs, storage.get_snapshots_directory());
-	transfer(snapshots, false);
-	snapshots = util::list_snapshots(*m_btrfs, storage.get_archive_directory());
-	transfer(snapshots, true);
-
-	std::ranges::sort(ret.entries, [](Entry const& a, Entry const& b) { return a.snapshot.timestamp < b.snapshot.timestamp; });
-
-	auto number = 1;
-	for (auto& entry : ret.entries) { entry.number = SnapshotNumber{number++}; }
-
-	return ret;
-}
-
 auto Recycler::get_sorted_snapshots_in(fs::path const& path) const -> std::vector<Snapshot> {
 	auto ret = util::list_snapshots(*m_btrfs, path);
 	// move youngest to back.

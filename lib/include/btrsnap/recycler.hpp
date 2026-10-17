@@ -15,8 +15,6 @@ class Recycler {
 
 	[[nodiscard]] auto recycle_snapshots(SubvolumeStorage const& storage, Config const& config) const -> Report;
 
-	[[nodiscard]] auto get_snapshot_list(SubvolumeStorage const& storage) const -> Snapshot::List;
-
 	[[nodiscard]] auto get_sorted_snapshots_in(fs::path const& path) const -> std::vector<Snapshot>;
 	[[nodiscard]] static auto get_excess_snapshots(std::vector<Snapshot> sorted, int keep) -> std::vector<Snapshot>;
 	[[nodiscard]] auto delete_snapshots(std::vector<Snapshot> snapshots) const -> std::vector<Result<Snapshot>>;
