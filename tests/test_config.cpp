@@ -11,6 +11,7 @@ TEST_CASE(instance_config_parse) {
 		{
 			"name": "@home",
 			"path": "/home",
+			"readonly_snapshots": true,
 			"recycle": {
 				"snapshot_limit": 2,
 				"archive_period_days": 3,
@@ -31,6 +32,7 @@ TEST_CASE(instance_config_parse) {
 	auto const& subvolume = instance_config.subvolumes.front();
 	EXPECT(subvolume.name == "@home");
 	EXPECT(subvolume.path == "/home");
+	EXPECT(subvolume.readonly_snapshots == true);
 	EXPECT(subvolume.recycle.snapshot_limit == 2);
 	EXPECT(subvolume.recycle.archive_period == 3 * 24h);
 	EXPECT(subvolume.recycle.archive_limit == 2);

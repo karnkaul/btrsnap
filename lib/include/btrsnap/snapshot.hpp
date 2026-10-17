@@ -1,5 +1,6 @@
 #pragma once
 #include "btrsnap/clock.hpp"
+#include "klib/ptr.hpp"
 #include <filesystem>
 #include <vector>
 
@@ -23,6 +24,8 @@ struct Snapshot::List {
 		Snapshot snapshot{};
 		bool is_archived{};
 	};
+
+	[[nodiscard]] auto find_snapshot(Number number) const -> klib::Ptr<Snapshot const>;
 
 	std::vector<Entry> entries{};
 };

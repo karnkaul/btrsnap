@@ -35,6 +35,8 @@ class Subvolume {
   private:
 	explicit Subvolume(gsl::not_null<IBtrfs const*> btrfs, Storage storage, Config config);
 
+	[[nodiscard]] auto save_snapshot_to(fs::path const& destination) const -> Result<void>;
+
 	gsl::not_null<IBtrfs const*> m_btrfs;
 	Storage m_storage;
 	Config m_config;

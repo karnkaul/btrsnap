@@ -107,6 +107,7 @@ void util::from_json(dj::Json const& json, RecycleConfig& out) {
 void util::from_json(dj::Json const& json, SubvolumeConfig& out) {
 	from_json(json["name"], out.name);
 	to_path(json["path"], out.path);
+	if (auto const& readonly_snapshots = json["readonly_snapshots"]) { from_json(readonly_snapshots, out.readonly_snapshots); }
 	from_json(json["recycle"], out.recycle);
 }
 

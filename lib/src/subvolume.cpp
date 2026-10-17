@@ -74,9 +74,7 @@ auto Subvolume::get_archived_snapshots() const -> std::vector<Snapshot> {
 
 auto Subvolume::take_snapshot(Timestamp const timestamp) -> Result<Snapshot> {
 	auto subdirectory = get_storage().get_snapshots_directory() / to_pathname(timestamp);
-	auto ret = m_btrfs->create_snapshot(m_config.path.generic_string(), subdirectory.generic_string()).transform([&] {
-		return Snapshot{.path = std::move(subdirectory), .timestamp = timestamp};
-	});
+	auto ret = save_snapshot_to(subdirectory).transform([&] { return Snapshot{.path = std::move(subdirectory), .timestamp = timestamp}; });
 	on_action(ret, "save");
 	return ret;
 }
@@ -92,6 +90,11 @@ auto Subvolume::clear_all_snapshots() -> std::vector<Result<Snapshot>> {
 void Subvolume::print_snapshots(std::ostream& out, Timestamp const now) const {
 	auto const printer = Printer{.out = out, .subvolume = m_config.name, .recycle = m_config.recycle, .now = now};
 	printer.print(Recycler{m_btrfs}.get_snapshot_list(m_storage));
+}
+
+auto Subvolume::save_snapshot_to(fs::path const& destination) const -> Result<void> {
+	if (m_config.readonly_snapshots) { return m_btrfs->create_readonly_snapshot(m_config.path.generic_string(), destination.generic_string()); }
+	return m_btrfs->create_snapshot(m_config.path.generic_string(), destination.generic_string());
 }
 
 auto Subvolume::List::take_snapshots(Timestamp const timestamp) -> std::vector<Result<Snapshot>> {

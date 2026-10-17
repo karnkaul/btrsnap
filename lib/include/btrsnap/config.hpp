@@ -27,6 +27,8 @@ struct SubvolumeConfig {
 	std::string name;
 	fs::path path;
 
+	bool readonly_snapshots{false};
+
 	RecycleConfig recycle{};
 };
 
