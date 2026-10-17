@@ -1,7 +1,6 @@
 #pragma once
 #include "btrsnap/instance.hpp"
 #include "command/runner.hpp"
-#include "klib/ptr.hpp"
 
 namespace btrsnap::cli {
 class App {

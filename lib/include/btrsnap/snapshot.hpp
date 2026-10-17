@@ -6,8 +6,6 @@ namespace btrsnap {
 namespace fs = std::filesystem;
 
 struct Snapshot {
-	struct List;
-
 	fs::path path{};
 	Timestamp timestamp{};
 };

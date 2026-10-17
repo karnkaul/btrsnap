@@ -10,45 +10,7 @@ namespace {
 	return std::ranges::all_of(results, [](auto const& result) { return result.has_value(); });
 }
 
-class Root : public IRootCommand {
-  public:
-	explicit Root(std::string_view& out_config_path) : m_out_config_path(out_config_path) {}
-
-  private:
-	[[nodiscard]] auto get_help_text() const -> std::string_view final { return "take and/or recycle snapshots"; }
-
-	auto get_option_list() -> clap::OptionList final {
-		return {
-			clap::named_option(m_out_config_path, "c,config", "path to custom config"),
-			clap::named_flag(m_params.no_recycle, "n,no-recycle", "skip recycling snapshots"),
-			clap::named_flag(m_params.only_recycle, "r,recycle", "only recycle existing snapshots"),
-		};
-	}
-
-	auto execute(SubvolumeList& subvolume_list) -> ExitCode final {
-		if (!m_params.only_recycle) {
-			auto const results = subvolume_list.take_snapshots();
-			if (results.empty() || !all_success(results)) { return ExitCode::Failure; }
-		}
-
-		if (!m_params.no_recycle) { subvolume_list.recycle_snapshots(); }
-
-		return ExitCode::Success;
-	}
-
-	struct Params {
-		bool generate{};
-		bool list{};
-		bool no_recycle{};
-		bool only_recycle{};
-		bool clear{};
-	};
-
-	std::string_view& m_out_config_path;
-	Params m_params{};
-};
-
-class TakeSnapshot : public ISubcommand {
+class TakeSnapshot : public ICommand {
 	[[nodiscard]] auto get_identifier() const -> std::string_view final { return "snapshot"; }
 	[[nodiscard]] auto get_help_text() const -> std::string_view final { return "take and/or recycle snapshots"; }
 
@@ -74,7 +36,7 @@ class TakeSnapshot : public ISubcommand {
 	bool m_only_recycle{};
 };
 
-class List : public ISubcommand {
+class List : public ICommand {
 	[[nodiscard]] auto get_identifier() const -> std::string_view final { return "list"; }
 	[[nodiscard]] auto get_help_text() const -> std::string_view final { return "print saved snapshots"; }
 
@@ -84,7 +46,7 @@ class List : public ISubcommand {
 	}
 };
 
-class Delete : public ISubcommand {
+class Delete : public ICommand {
 	[[nodiscard]] auto get_identifier() const -> std::string_view final { return "delete"; }
 	[[nodiscard]] auto get_help_text() const -> std::string_view final { return "delete ALL saved snapshots"; }
 
@@ -99,14 +61,15 @@ class Delete : public ISubcommand {
 auto App::run(int const argc, char const* const* argv) -> int {
 	auto runner = Runner{};
 
-	runner.subcommands.push_back(std::make_unique<TakeSnapshot>());
-	runner.subcommands.push_back(std::make_unique<List>());
-	runner.subcommands.push_back(std::make_unique<Delete>());
+	runner.commands.push_back(std::make_unique<TakeSnapshot>());
+	runner.commands.push_back(std::make_unique<List>());
+	runner.commands.push_back(std::make_unique<Delete>());
 
 	auto options = clap::OptionList{
 		clap::named_option(m_custom_config_path, "c,config", "path to custom config"),
 	};
 	if (auto const exit_code = runner.parse_args(std::move(options), argc, argv)) { return static_cast<int>(*exit_code); }
+
 	if (!load_config() || !setup_instance() || !load_subvolumes()) { return EXIT_FAILURE; }
 
 	return static_cast<int>(runner.execute(m_subvolume_list));

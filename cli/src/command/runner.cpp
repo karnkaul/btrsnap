@@ -15,7 +15,7 @@ auto Runner::parse_args(clap::OptionList options, int const argc, char const* co
 				.version = version_str,
 			},
 	};
-	for (auto const& subcommand : subcommands) {
+	for (auto const& subcommand : commands) {
 		spec.commands.push_back(clap::command(subcommand->get_identifier(), subcommand->get_parameter_list(), subcommand->get_help_text()));
 	}
 
@@ -27,11 +27,10 @@ auto Runner::parse_args(clap::OptionList options, int const argc, char const* co
 	return {};
 }
 
-auto Runner::execute(SubvolumeList& subvolume_list) -> ExitCode { return get_command(m_command_identifier).execute(subvolume_list); }
-
-auto Runner::get_command(std::string_view const identifier) const -> ICommand& {
-	auto const it = std::ranges::find_if(subcommands, [identifier](auto const& sc) { return sc->get_identifier() == identifier; });
-	KLIB_ASSERT(it != subcommands.end());
-	return **it;
+auto Runner::execute(SubvolumeList& subvolume_list) -> ExitCode {
+	auto const it = std::ranges::find_if(commands, [this](auto const& cmd) { return cmd->get_identifier() == m_command_identifier; });
+	KLIB_ASSERT(it != commands.end());
+	auto& command = *it;
+	return command->execute(subvolume_list);
 }
 } // namespace btrsnap::cli

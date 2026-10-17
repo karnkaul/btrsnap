@@ -15,8 +15,6 @@ class Subvolume {
 	using Config = SubvolumeConfig;
 	using Storage = SubvolumeStorage;
 
-	class List;
-
 	[[nodiscard]] static auto create(gsl::not_null<IBtrfs const*> btrfs, StorageConfig const& storage_config, Config config) -> Result<Subvolume>;
 
 	[[nodiscard]] auto get_btrfs() const -> IBtrfs const& { return *m_btrfs; }
