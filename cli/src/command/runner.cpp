@@ -5,18 +5,14 @@
 #include <algorithm>
 
 namespace btrsnap::cli {
-auto Runner::parse_args(int const argc, char const* const* argv) -> std::optional<ExitCode> {
-	if (!root_command) { return ExitCode::Failure; }
-
+auto Runner::parse_args(clap::OptionList options, int const argc, char const* const* argv) -> std::optional<ExitCode> {
 	static auto const version_str = std::format("{}", build_version_v);
 	auto spec = clap::spec::Commands{
-		.options = root_command->get_option_list(),
-		.policy = clap::CommandPolicy::Optional,
+		.options = std::move(options),
 		.program =
 			{
 				.name = "btrsnap",
 				.version = version_str,
-				.description = root_command->get_help_text(),
 			},
 	};
 	for (auto const& subcommand : subcommands) {
@@ -34,14 +30,8 @@ auto Runner::parse_args(int const argc, char const* const* argv) -> std::optiona
 auto Runner::execute(SubvolumeList& subvolume_list) -> ExitCode { return get_command(m_command_identifier).execute(subvolume_list); }
 
 auto Runner::get_command(std::string_view const identifier) const -> ICommand& {
-	KLIB_ASSERT(root_command);
-
-	if (!identifier.empty()) {
-		auto const it = std::ranges::find_if(subcommands, [identifier](auto const& sc) { return sc->get_identifier() == identifier; });
-		KLIB_ASSERT(it != subcommands.end());
-		return **it;
-	}
-
-	return *root_command;
+	auto const it = std::ranges::find_if(subcommands, [identifier](auto const& sc) { return sc->get_identifier() == identifier; });
+	KLIB_ASSERT(it != subcommands.end());
+	return **it;
 }
 } // namespace btrsnap::cli

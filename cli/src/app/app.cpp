@@ -48,6 +48,32 @@ class Root : public IRootCommand {
 	Params m_params{};
 };
 
+class TakeSnapshot : public ISubcommand {
+	[[nodiscard]] auto get_identifier() const -> std::string_view final { return "snapshot"; }
+	[[nodiscard]] auto get_help_text() const -> std::string_view final { return "take and/or recycle snapshots"; }
+
+	auto get_parameter_list() -> clap::ParameterList final {
+		return {
+			clap::named_flag(m_no_recycle, "n,no-recycle", "skip recycling snapshots"),
+			clap::named_flag(m_only_recycle, "r,recycle", "only recycle existing snapshots"),
+		};
+	}
+
+	auto execute(SubvolumeList& subvolume_list) -> ExitCode final {
+		if (!m_only_recycle) {
+			auto const results = subvolume_list.take_snapshots();
+			if (results.empty() || !all_success(results)) { return ExitCode::Failure; }
+		}
+
+		if (!m_no_recycle) { subvolume_list.recycle_snapshots(); }
+
+		return ExitCode::Success;
+	}
+
+	bool m_no_recycle{};
+	bool m_only_recycle{};
+};
+
 class List : public ISubcommand {
 	[[nodiscard]] auto get_identifier() const -> std::string_view final { return "list"; }
 	[[nodiscard]] auto get_help_text() const -> std::string_view final { return "print saved snapshots"; }
@@ -73,11 +99,14 @@ class Delete : public ISubcommand {
 auto App::run(int const argc, char const* const* argv) -> int {
 	auto runner = Runner{};
 
-	runner.root_command = std::make_unique<Root>(m_custom_config_path);
+	runner.subcommands.push_back(std::make_unique<TakeSnapshot>());
 	runner.subcommands.push_back(std::make_unique<List>());
 	runner.subcommands.push_back(std::make_unique<Delete>());
 
-	if (auto const exit_code = runner.parse_args(argc, argv)) { return static_cast<int>(*exit_code); }
+	auto options = clap::OptionList{
+		clap::named_option(m_custom_config_path, "c,config", "path to custom config"),
+	};
+	if (auto const exit_code = runner.parse_args(std::move(options), argc, argv)) { return static_cast<int>(*exit_code); }
 	if (!load_config() || !setup_instance() || !load_subvolumes()) { return EXIT_FAILURE; }
 
 	return static_cast<int>(runner.execute(m_subvolume_list));
