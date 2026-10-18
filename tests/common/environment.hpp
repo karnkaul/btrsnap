@@ -11,17 +11,17 @@ class Environment {
 
 	[[nodiscard]] auto get_btrfs() const -> IBtrfs const& { return m_btrfs; }
 	[[nodiscard]] auto get_test_directory() const -> fs::path const& { return m_test_dir.get_path(); }
-	[[nodiscard]] auto get_storage_info() const -> StorageInfo const& { return m_storage_info; }
+	[[nodiscard]] auto get_storage_config() const -> StorageConfig const& { return m_storage_config; }
 
 	[[nodiscard]] auto path_to(std::string_view const subpath) const -> fs::path { return get_test_directory() / subpath; }
 
-	[[nodiscard]] auto create_subvolume_info(std::string_view subvolume_subpath, std::string_view name = "subvol", RecycleInfo recycle = {}) const
-		-> SubvolumeInfo;
-	[[nodiscard]] auto create_subvolume(std::string_view subpath, std::string_view name = "subvol", RecycleInfo recycle = {}) const -> Result<Subvolume>;
+	[[nodiscard]] auto create_subvolume_config(std::string_view subvolume_subpath, std::string_view name = "subvol", RecycleConfig recycle = {}) const
+		-> SubvolumeConfig;
+	[[nodiscard]] auto create_subvolume(std::string_view subpath, std::string_view name = "subvol", RecycleConfig recycle = {}) const -> Result<Subvolume>;
 
   private:
 	TestDirectory m_test_dir{};
 	MockBtrfs m_btrfs{};
-	StorageInfo m_storage_info{.root = m_test_dir.get_path() / "storage"};
+	StorageConfig m_storage_config{.root = m_test_dir.get_path() / "storage"};
 };
 } // namespace btrsnap::test

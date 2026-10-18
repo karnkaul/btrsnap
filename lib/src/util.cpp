@@ -81,21 +81,37 @@ auto util::ensure_directory(fs::path const& path) -> Result<void> {
 	return util::is_directory(path);
 }
 
-void util::from_json(dj::Json const& json, StorageInfo& out) { to_path(json, out.root); }
+void util::from_json(dj::Json const& json, StorageConfig& out) { to_path(json, out.root); }
 
-void util::from_json(dj::Json const& json, RecycleInfo& out) {
+auto util::load_config(std::string_view path) -> Result<InstanceConfig> {
+	if (path.empty()) { path = "/etc/btrsnap.jsonc"; }
+
+	auto json = dj::Json::from_file(path);
+	if (!json) { return detail::filesystem_error(std::format("Failed to load config from: {}", path)); }
+
+	auto ret = InstanceConfig{};
+	from_json(*json, ret);
+	if (ret.subvolumes.empty()) { return detail::to_error(Error::Type::InvalidArgument, std::format("No subvolumes found in: {}", path)); }
+
+	ret.source = fs::absolute(path);
+
+	return ret;
+}
+
+void util::from_json(dj::Json const& json, RecycleConfig& out) {
 	if (auto const& snapshot_limit = json["snapshot_limit"]) { from_json(snapshot_limit, out.snapshot_limit); }
 	if (auto const& archive_period_days = json["archive_period_days"]) { to_days(archive_period_days, out.archive_period); }
 	if (auto const& archive_limit = json["archive_limit"]) { from_json(archive_limit, out.archive_limit); }
 }
 
-void util::from_json(dj::Json const& json, SubvolumeInfo& out) {
+void util::from_json(dj::Json const& json, SubvolumeConfig& out) {
 	from_json(json["name"], out.name);
 	to_path(json["path"], out.path);
+	if (auto const& readonly_snapshots = json["readonly_snapshots"]) { from_json(readonly_snapshots, out.readonly_snapshots); }
 	from_json(json["recycle"], out.recycle);
 }
 
-void util::from_json(dj::Json const& json, InstanceInfo& out) {
+void util::from_json(dj::Json const& json, InstanceConfig& out) {
 	if (auto const& storage = json["storage"]) { from_json(storage, out.storage); }
 	for (auto const& subvolume : json["subvolumes"].as_array()) { from_json(subvolume, out.subvolumes.emplace_back()); }
 }

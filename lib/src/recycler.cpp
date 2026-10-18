@@ -7,9 +7,9 @@ namespace {
 auto const log = klib::log::Typed<Recycler>{};
 } // namespace
 
-auto Recycler::recycle_snapshots(Storage const& storage, Info const& info) const -> Report {
+auto Recycler::recycle_snapshots(SubvolumeStorage const& storage, Config const& config) const -> Report {
 	auto const get_excess_live_snapshots = [&] {
-		return get_excess_snapshots(get_sorted_snapshots_in(storage.get_snapshots_directory()), info.snapshot_limit);
+		return get_excess_snapshots(get_sorted_snapshots_in(storage.get_snapshots_directory()), config.snapshot_limit);
 	};
 
 	auto excess = get_excess_live_snapshots();
@@ -19,34 +19,13 @@ auto Recycler::recycle_snapshots(Storage const& storage, Info const& info) const
 	}
 
 	auto ret = Report{};
-	ret.archived = populate_archive(storage, excess, info.archive_period);
+	ret.archived = populate_archive(storage, excess, config.archive_period);
 	if (!ret.archived.empty()) { excess = get_excess_live_snapshots(); }
 
 	ret.deleted = delete_snapshots(std::move(excess));
 
-	excess = get_excess_snapshots(get_sorted_snapshots_in(storage.get_archive_directory()), info.archive_limit);
+	excess = get_excess_snapshots(get_sorted_snapshots_in(storage.get_archive_directory()), config.archive_limit);
 	ret.deleted.append_range(delete_snapshots(std::move(excess)));
-
-	return ret;
-}
-
-auto Recycler::get_snapshot_list(Storage const& storage) const -> SnapshotList {
-	using Entry = SnapshotList::Entry;
-
-	auto ret = SnapshotList{};
-	auto const transfer = [&ret](std::span<Snapshot> snapshots, bool const is_archived) {
-		for (auto& snapshot : snapshots) { ret.entries.push_back(Entry{.snapshot = std::move(snapshot), .is_archived = is_archived}); }
-	};
-
-	auto snapshots = util::list_snapshots(*m_btrfs, storage.get_snapshots_directory());
-	transfer(snapshots, false);
-	snapshots = util::list_snapshots(*m_btrfs, storage.get_archive_directory());
-	transfer(snapshots, true);
-
-	std::ranges::sort(ret.entries, [](Entry const& a, Entry const& b) { return a.snapshot.timestamp < b.snapshot.timestamp; });
-
-	auto number = 1;
-	for (auto& entry : ret.entries) { entry.number = SnapshotNumber{number++}; }
 
 	return ret;
 }
@@ -93,7 +72,8 @@ auto Recycler::archive_snapshot(Snapshot const& source, fs::path const& parent_d
 	return ret;
 }
 
-auto Recycler::populate_archive(Storage const& storage, std::span<Snapshot const> excess, std::chrono::days const period) const -> std::vector<Snapshot> {
+auto Recycler::populate_archive(SubvolumeStorage const& storage, std::span<Snapshot const> excess, std::chrono::days const period) const
+	-> std::vector<Snapshot> {
 	if (excess.empty()) { return {}; }
 
 	auto latest_timestamp = [&] -> std::optional<Timestamp> {

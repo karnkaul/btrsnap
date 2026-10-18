@@ -7,7 +7,7 @@
 namespace btrsnap {
 namespace fs = std::filesystem;
 
-struct StorageInfo {
+struct StorageConfig {
 	static constexpr std::string_view snapshots_subdirectory_v{"snapshots"};
 	static constexpr std::string_view archive_subdirectory_v{"archive"};
 
@@ -17,21 +17,24 @@ struct StorageInfo {
 	fs::path root{"/btrsnap"};
 };
 
-struct RecycleInfo {
+struct RecycleConfig {
 	int snapshot_limit{3};
 	int archive_limit{3};
 	std::chrono::days archive_period{7};
 };
 
-struct SubvolumeInfo {
+struct SubvolumeConfig {
 	std::string name;
 	fs::path path;
 
-	RecycleInfo recycle{};
+	bool readonly_snapshots{false};
+
+	RecycleConfig recycle{};
 };
 
-struct InstanceInfo {
-	StorageInfo storage{};
-	std::vector<SubvolumeInfo> subvolumes{};
+struct InstanceConfig {
+	fs::path source{};
+	StorageConfig storage{};
+	std::vector<SubvolumeConfig> subvolumes{};
 };
 } // namespace btrsnap

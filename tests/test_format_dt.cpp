@@ -3,8 +3,6 @@
 
 namespace btrsnap::test {
 namespace {
-using namespace std::chrono_literals;
-
 TEST_CASE(format_delta_time) {
 	auto dt = 4h + 30min;
 	auto str = format_delta_time(dt);

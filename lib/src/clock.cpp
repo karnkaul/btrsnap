@@ -4,8 +4,6 @@
 
 namespace btrsnap {
 namespace {
-using namespace std::chrono_literals;
-
 class DurationSplitter {
   public:
 	[[nodiscard]] auto operator()(Seconds const in, int const num_largest) -> std::string {
