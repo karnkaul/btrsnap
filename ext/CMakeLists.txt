@@ -2,6 +2,7 @@ file(ARCHIVE_EXTRACT INPUT "${CMAKE_CURRENT_SOURCE_DIR}/src.zip" DESTINATION "${
 
 if(NOT TARGET djson::djson)
   message(STATUS "[djson]")
+  set(DJ_INSTALL OFF)
   add_subdirectory(src/djson)
 endif()
 
@@ -14,5 +15,6 @@ endif()
 
 if(NOT TARGET clap::clap)
   message(STATUS "[clap]")
+  set(CLAP_INSTALL OFF)
   add_subdirectory(src/clap)
 endif()
