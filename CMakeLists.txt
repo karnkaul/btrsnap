@@ -9,6 +9,7 @@ set(package_name btrsnap)
 project(${package_name} VERSION 0.4.1)
 
 option(BTRSNAP_BUILD_TESTS "Build btrsnap tests" ${PROJECT_IS_TOP_LEVEL})
+option(BTRSNAP_INSTALL "Setup btrsnap (CLI) install" ${PROJECT_IS_TOP_LEVEL})
 
 add_subdirectory(ext)
 add_subdirectory(lib)

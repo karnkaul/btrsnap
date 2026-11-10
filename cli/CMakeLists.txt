@@ -13,3 +13,11 @@ file(GLOB_RECURSE sources LIST_DIRECTORIES false "src/*.[hc]pp")
 target_sources(${package_name} PRIVATE
   ${sources}
 )
+
+if (BTRSNAP_INSTALL)
+  include(GNUInstallDirs)
+  message(STATUS "setting up btrsnap install")
+  install(TARGETS ${package_name}
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+  )
+endif()
