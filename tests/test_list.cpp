@@ -1,7 +1,6 @@
-#include "btrsnap/list.hpp"
-#include "common/environment.hpp"
+import btrsnap.test;
+
 #include "klib/unit_test/unit_test.hpp"
-#include <algorithm>
 
 namespace btrsnap::test {
 namespace {
@@ -20,7 +19,9 @@ TEST_CASE(snapshot_list_delete) {
 	auto list = SnapshotList{*subvolume};
 	auto const entries = list.get_entries();
 	EXPECT(!entries.empty());
-	auto const it = std::ranges::find_if(entries, [&](Entry const& e) { return e.snapshot.path == snapshot_result->path; });
+	auto const it = std::ranges::find_if(entries, [&](Entry const& e) {
+		return e.snapshot.path == snapshot_result->path;
+	});
 	ASSERT(it != entries.end());
 
 	auto delete_result = list.delete_snapshot(it->number);

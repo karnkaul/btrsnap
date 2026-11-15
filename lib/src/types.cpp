@@ -1,6 +1,11 @@
-#include "btrsnap/clock.hpp"
-#include <format>
-#include <sstream>
+module btrsnap.types;
+
+auto btrsnap::to_error(Error::Type const type, std::string_view const message) -> std::unexpected<Error> {
+	return std::unexpected{Error{
+		.type = type,
+		.message = std::format("{}: {}", error_type_name_map.to_name(type), message),
+	}};
+}
 
 namespace btrsnap {
 namespace {
@@ -23,11 +28,17 @@ class DurationSplitter {
   private:
 	template <typename DurationT>
 	void subtract(std::string_view const unit = {}) {
-		if (m_to_append <= 0) { return; }
+		if (m_to_append <= 0) {
+			return;
+		}
 		auto const duration = std::chrono::duration_cast<DurationT>(m_remain);
-		if (m_ret.empty() && duration == 0s) { return; }
+		if (m_ret.empty() && duration == 0s) {
+			return;
+		}
 		m_remain -= duration;
-		if (!m_ret.empty()) { m_ret.push_back(' '); }
+		if (!m_ret.empty()) {
+			m_ret.push_back(' ');
+		}
 		if (unit.empty()) {
 			std::format_to(std::back_inserter(m_ret), "{}", duration);
 		} else {
@@ -46,7 +57,9 @@ class DurationSplitter {
 auto btrsnap::to_timestamp(klib::CString const serialized) -> std::optional<Timestamp> {
 	auto str = std::istringstream{serialized.c_str()};
 	auto ret = std::chrono::time_point<Clock, Timestamp>{};
-	if (str >> std::chrono::parse("%Y-%m-%d_%H-%M-%S", ret)) { return ret.time_since_epoch(); }
+	if (str >> std::chrono::parse("%Y-%m-%d_%H-%M-%S", ret)) {
+		return ret.time_since_epoch();
+	}
 	return {};
 }
 
@@ -60,4 +73,6 @@ auto btrsnap::to_pathname(Timestamp const timestamp) -> std::string {
 	return std::format("{:%Y-%m-%d_%H-%M-%S}", time_point);
 }
 
-auto btrsnap::format_delta_time(Seconds const delta_time, int const num_largest) -> std::string { return DurationSplitter{}(delta_time, num_largest); }
+auto btrsnap::format_delta_time(Seconds const delta_time, int const num_largest) -> std::string {
+	return DurationSplitter{}(delta_time, num_largest);
+}

@@ -1,19 +1,16 @@
-#pragma once
-#include "btrsnap/btrfs.hpp"
-#include "btrsnap/config.hpp"
-#include "btrsnap/snapshot.hpp"
-#include <optional>
-#include <vector>
+export module btrsnap.util;
 
-namespace dj {
-class Json;
-} // namespace dj
+export import djson;
+export import btrsnap.btrfs;
+export import btrsnap.config;
+export import btrsnap.types;
 
-namespace btrsnap::util {
+export namespace btrsnap::util {
 [[nodiscard]] auto to_snapshot(IBtrfs const& btrfs, fs::path path) -> std::optional<Snapshot>;
 [[nodiscard]] auto list_snapshots(IBtrfs const& btrfs, fs::path const& parent) -> std::vector<Snapshot>;
 
-[[nodiscard]] auto copy_snapshot(IBtrfs const& btrfs, Snapshot const& source, fs::path const& dst_dir) -> Result<Snapshot>;
+[[nodiscard]] auto copy_snapshot(IBtrfs const& btrfs, Snapshot const& source, fs::path const& dst_dir)
+	-> Result<Snapshot>;
 
 [[nodiscard]] auto is_non_empty(fs::path const& path) -> Result<void>;
 [[nodiscard]] auto is_directory(fs::path const& path) -> Result<void>;

@@ -1,4 +1,5 @@
-#include "btrsnap/clock.hpp"
+import btrsnap.types;
+
 #include "klib/unit_test/unit_test.hpp"
 
 namespace btrsnap::test {
