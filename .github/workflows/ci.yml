@@ -15,3 +15,5 @@ jobs:
         run: .github/format_check_diff.sh
   ci:
     uses: karnkaul/cpp_workflows/.github/workflows/modules_ci.yml@v1
+    with:
+      install: libbtrfsutil-dev
