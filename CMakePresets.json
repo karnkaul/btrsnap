@@ -35,7 +35,7 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_CXX_FLAGS_INIT": "-Wall -Wextra -Wpedantic -Wconversion -Wshadow-header -Werror=return-type",
+        "CMAKE_CXX_FLAGS_INIT": "-Wall -Wextra -Wpedantic -Wconversion -Wshadow-header -Werror=return-type -Wno-reserved-module-identifier",
         "CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT": "-Werror",
         "CMAKE_CXX_FLAGS_RELEASE_INIT": "-Werror"
       }
