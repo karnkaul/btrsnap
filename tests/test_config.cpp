@@ -1,5 +1,6 @@
-#include "btrsnap/util.hpp"
-#include "djson/json.hpp"
+import btrsnap.config;
+import btrsnap.util;
+
 #include "klib/unit_test/unit_test.hpp"
 
 namespace btrsnap::test {

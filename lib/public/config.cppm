@@ -1,10 +1,8 @@
-#pragma once
-#include <chrono>
-#include <filesystem>
-#include <string>
-#include <vector>
+export module btrsnap.config;
 
-namespace btrsnap {
+export import std;
+
+export namespace btrsnap {
 namespace fs = std::filesystem;
 
 struct StorageConfig {

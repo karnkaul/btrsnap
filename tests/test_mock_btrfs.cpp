@@ -1,6 +1,5 @@
-#include "common/mock_btrfs.hpp"
-#include "common/test_directory.hpp"
-#include "klib/file_io.hpp"
+import btrsnap.test;
+
 #include "klib/unit_test/unit_test.hpp"
 
 namespace btrsnap::test {

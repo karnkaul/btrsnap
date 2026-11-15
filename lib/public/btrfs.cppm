@@ -1,9 +1,8 @@
-#pragma once
-#include "btrsnap/result.hpp"
-#include "klib/base_types.hpp"
-#include "klib/string/c_string.hpp"
+export module btrsnap.btrfs;
 
-namespace btrsnap {
+export import btrsnap.types;
+
+export namespace btrsnap {
 class IBtrfs : public klib::Polymorphic {
   public:
 	[[nodiscard]] static auto get_default() -> IBtrfs const&;

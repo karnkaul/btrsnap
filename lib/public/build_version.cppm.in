@@ -1,7 +1,8 @@
-#pragma once
-#include "klib/version.hpp"
+export module btrsnap.build_version;
 
-namespace btrsnap {
+export import klib.core;
+
+export namespace btrsnap {
 constexpr auto build_version_v = klib::Version{
 	.major = @PROJECT_VERSION_MAJOR@,
 	.minor = @PROJECT_VERSION_MINOR@,

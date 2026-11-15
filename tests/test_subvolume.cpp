@@ -1,5 +1,5 @@
-#include "btrsnap/subvolume.hpp"
-#include "common/environment.hpp"
+import btrsnap.test;
+
 #include "klib/unit_test/unit_test.hpp"
 
 namespace btrsnap::test {

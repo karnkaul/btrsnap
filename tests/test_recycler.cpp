@@ -1,5 +1,5 @@
-#include "btrsnap/recycler.hpp"
-#include "common/environment.hpp"
+import btrsnap.test;
+
 #include "klib/unit_test/unit_test.hpp"
 
 namespace btrsnap::test {
@@ -7,7 +7,8 @@ namespace {
 struct Fixture {
 	static constexpr std::string_view subvolume_subpath_v{"subvol"};
 	static constexpr std::string_view subvolume_name_v{"@subvol"};
-	static constexpr auto recycle_v = RecycleConfig{.snapshot_limit = 2, .archive_limit = 2, .archive_period = std::chrono::days{1}};
+	static constexpr auto recycle_v =
+		RecycleConfig{.snapshot_limit = 2, .archive_limit = 2, .archive_period = std::chrono::days{1}};
 
 	Environment environment{};
 	Recycler recycler{&environment.get_btrfs()};
@@ -32,7 +33,8 @@ struct Snapshotter {
 TEST_CASE(recycler_empty_subvolume) {
 	auto fixture = Fixture{};
 
-	auto snapshots = fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
+	auto snapshots =
+		fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
 	EXPECT(snapshots.empty());
 	snapshots = fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_archive_directory());
 	EXPECT(snapshots.empty());
@@ -41,8 +43,10 @@ TEST_CASE(recycler_empty_subvolume) {
 TEST_CASE(recycler_noop) {
 	auto fixture = Fixture{};
 	Snapshotter{.subvolume = fixture.subvolume, .delta = 24h}.take_snapshots(Fixture::recycle_v.snapshot_limit);
-	auto live_snapshots = fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
-	auto excess_snapshots = Recycler::get_excess_snapshots(std::move(live_snapshots), Fixture::recycle_v.snapshot_limit);
+	auto live_snapshots =
+		fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
+	auto excess_snapshots =
+		Recycler::get_excess_snapshots(std::move(live_snapshots), Fixture::recycle_v.snapshot_limit);
 	EXPECT(excess_snapshots.empty());
 }
 
@@ -50,15 +54,18 @@ TEST_CASE(recycler_archive_single) {
 	auto fixture = Fixture{};
 
 	auto const expected_timestamp = current_timestamp();
-	Snapshotter{.subvolume = fixture.subvolume, .delta = 12h, .next_timestamp = expected_timestamp}.take_snapshots(Fixture::recycle_v.snapshot_limit + 1);
+	Snapshotter{.subvolume = fixture.subvolume, .delta = 12h, .next_timestamp = expected_timestamp}.take_snapshots(
+		Fixture::recycle_v.snapshot_limit + 1);
 
-	auto live_snapshots = fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
+	auto live_snapshots =
+		fixture.recycler.get_sorted_snapshots_in(fixture.subvolume.get_storage().get_snapshots_directory());
 	auto snapshots = Recycler::get_excess_snapshots(std::move(live_snapshots), Fixture::recycle_v.snapshot_limit);
 
 	ASSERT(snapshots.size() == 1);
 	EXPECT(snapshots.front().timestamp == expected_timestamp);
 
-	snapshots = fixture.recycler.populate_archive(fixture.subvolume.get_storage(), std::move(snapshots), Fixture::recycle_v.archive_period);
+	snapshots = fixture.recycler.populate_archive(
+		fixture.subvolume.get_storage(), std::move(snapshots), Fixture::recycle_v.archive_period);
 	ASSERT(snapshots.size() == 1);
 	EXPECT(snapshots.front().timestamp == expected_timestamp);
 
@@ -82,11 +89,14 @@ TEST_CASE(recycler_recycle_multiple) {
 	EXPECT(report.deleted.size() == 1);
 
 	snapshotter.take_snapshots(3); // limit + 3 live, 1 archive
-	auto const pre_recycle_count = static_cast<int>(fixture.subvolume.get_live_snapshots().size() + fixture.subvolume.get_archived_snapshots().size());
+	auto const pre_recycle_count = static_cast<int>(fixture.subvolume.get_live_snapshots().size() +
+													fixture.subvolume.get_archived_snapshots().size());
 	EXPECT(pre_recycle_count == Fixture::recycle_v.snapshot_limit + 3 + 1);
 
-	report = fixture.recycler.recycle_snapshots(fixture.subvolume.get_storage(), Fixture::recycle_v); // limit live, limit archive
-	auto const post_recycle_count = static_cast<int>(fixture.subvolume.get_live_snapshots().size() + fixture.subvolume.get_archived_snapshots().size());
+	report = fixture.recycler.recycle_snapshots(fixture.subvolume.get_storage(),
+												Fixture::recycle_v); // limit live, limit archive
+	auto const post_recycle_count = static_cast<int>(fixture.subvolume.get_live_snapshots().size() +
+													 fixture.subvolume.get_archived_snapshots().size());
 	EXPECT(post_recycle_count == Fixture::recycle_v.snapshot_limit + Fixture::recycle_v.archive_limit);
 }
 } // namespace
