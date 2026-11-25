@@ -1,7 +1,8 @@
 export module btrsnap.cli;
 
 export import btrsnap;
-export import clap;
+
+import clap.spec;
 
 export namespace btrsnap::cli {
 enum struct ExitCode : std::int8_t {
