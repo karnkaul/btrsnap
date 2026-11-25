@@ -1,5 +1,7 @@
 module btrsnap.cli;
 
+import clap;
+
 namespace btrsnap::cli {
 namespace {
 [[nodiscard]] auto all_success(std::span<Result<Snapshot> const> results) {
@@ -77,8 +79,7 @@ auto Runner::parse_args(clap::OptionList options, int const argc, char const* co
 			clap::command(subcommand->get_identifier(), subcommand->get_parameter_list(), subcommand->get_help_text()));
 	}
 
-	auto parser = clap::Parser{std::move(spec)};
-	auto const parse_result = parser.parse_main(argc, argv);
+	auto const parse_result = clap::parse_main(std::move(spec), argc, argv);
 	if (parse_result.should_early_exit()) {
 		return static_cast<ExitCode>(parse_result.exit_code());
 	}
